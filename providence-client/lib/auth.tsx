@@ -23,8 +23,12 @@ export interface User {
   location?: string;
   courseLevel?: string;
   profileComplete?: number;
+  /** Mode d'accueil : null = pas encore choisi (écran de choix). */
+  homeMode?: HomeMode | null;
   createdAt: string;
 }
+
+export type HomeMode = 'parcours' | 'libre';
 
 export interface StoredUser extends User {
   password?: string;
@@ -46,6 +50,8 @@ type ProfileRow = {
   location: string | null;
   course_level: string | null;
   profile_complete: number;
+  /** Absente tant que la migration 0004 n'est pas appliquée. */
+  home_mode?: HomeMode | null;
   created_at: string;
 };
 
@@ -61,6 +67,7 @@ function mapProfileToUser(p: ProfileRow): User {
     location: p.location ?? undefined,
     courseLevel: p.course_level ?? undefined,
     profileComplete: p.profile_complete,
+    homeMode: p.home_mode ?? null,
     createdAt: p.created_at,
   };
 }
@@ -116,6 +123,8 @@ interface AuthContextType {
     courseLevel: string,
   ) => Promise<boolean>;
   logout: () => void;
+  /** Enregistre le mode d'accueil dans le profil. */
+  setHomeMode: (mode: HomeMode) => Promise<void>;
   isLoading: boolean;
   getAllUsers: () => Promise<StoredUser[]>;
   createUser: (
@@ -264,6 +273,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const setHomeMode = async (mode: HomeMode): Promise<void> => {
+    if (!user) return;
+    // Optimiste : l'accueil change tout de suite.
+    const next = { ...user, homeMode: mode };
+    setUser(next);
+    persistUser(next);
+    const { error } = await supabase.from('profiles').update({ home_mode: mode }).eq('id', user.id);
+    if (error) {
+      // Migration 0004 pas encore appliquée, ou réseau : le choix reste valable
+      // pour cette session, mais il n'est pas enregistré dans le compte.
+      console.warn('[parcours] mode non enregistré dans le profil :', error.message);
+    }
+  };
+
   const logout = () => {
     void supabase.auth.signOut();
     setUser(null);
@@ -405,6 +428,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginWithMatricule,
         completeStudentProfile,
         logout,
+        setHomeMode,
         isLoading,
         getAllUsers,
         createUser,
