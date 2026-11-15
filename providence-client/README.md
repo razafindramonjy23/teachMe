@@ -45,23 +45,17 @@ npm run dev
 
 ## 🔐 Authentification
 
-Le système d'authentification est basé sur `localStorage` (demo).
+Authentification **Supabase Auth** (email + mot de passe, ou matricule pour les étudiants).
 
-**Compte démo :**
-- Email : `demo@providence.academy`
-- Mot de passe : `demo123`
-
-**Compte admin :**
-- Email : `admin@providence.academy`
-- Mot de passe : `admin123`
-
-> Pour une vraie production, remplacez `lib/auth.tsx` par un appel API (Next.js API Routes + base de données).
+- **Pas d'inscription publique** : les comptes sont créés par un administrateur depuis `/dashboard/admin`. Le réglage Supabase « Allow new users to sign up » doit rester désactivé.
+- **Aucun mot de passe n'est écrit dans ce dépôt** (il est public). Les comptes de démonstration se créent avec `scripts/seed-demo-users.mjs`, qui lit les mots de passe dans `SEED_SUPERUSER_PASSWORD`, `SEED_ADMIN_PASSWORD` et `SEED_DEMO_PASSWORD`.
+- **Compte démo sur la page de connexion** : affiché seulement si `NEXT_PUBLIC_DEMO_PASSWORD` est défini — en développement, ou en production avec `NEXT_PUBLIC_SHOW_DEMO_ACCOUNT=true`.
 
 ## 📁 Structure
 
 ```
 app/
-  auth/          → Page de connexion / inscription
+  auth/          → Page de connexion (pas d'inscription publique)
   dashboard/
     page.tsx     → Accueil (niveaux + cours spéciaux)
     rules/       → Règles du Self-Access
@@ -79,7 +73,7 @@ lib/
 | Route | Description |
 |-------|-------------|
 | `/` | Redirection auto (auth ou dashboard) |
-| `/auth` | Connexion / Inscription |
+| `/auth` | Connexion (comptes créés par un administrateur) |
 | `/dashboard` | Accueil avec niveaux et cours spéciaux |
 | `/dashboard/rules` | Règles du Self-Access |
 | `/dashboard/contact` | Formulaire de contact |
@@ -93,6 +87,34 @@ lib/
 | `/dashboard/levels/business` | Business English |
 | `/dashboard/levels/cae` | C1 Advanced (CAE) |
 | `/dashboard/levels/ielts` | IELTS Preparation |
+
+## ✅ Qualité et vérifications
+
+Prérequis : **Node ≥ 22.18** pour les tests (exécution native du TypeScript, aucune dépendance de test).
+
+| Commande | Rôle |
+|---|---|
+| `npm run check` | Tout ce qui suit sauf le réseau — à lancer avant chaque commit |
+| `npm run typecheck` | Vérification TypeScript |
+| `npm run lint` | ESLint (`next/core-web-vitals`) |
+| `npm test` | Tests unitaires (`tests/*.test.ts`) : identité des ressources, règles de rôles, matricules, détection des liens détournés |
+| `npm run catalog:check` | Teste chaque lien du catalogue : morts, redirigés vers un autre site, upgradables en https |
+| `npm run catalog:check -- --offline` | Contrôles statiques du catalogue uniquement (rapide) |
+| `npm run catalog:check -- --write` | Applique les passages http → https sûrs |
+
+La CI GitHub (`.github/workflows/check.yml`) lance `check` à chaque push sur `main` et à chaque pull request, et le test réseau des liens chaque lundi.
+
+**Ajouter une ressource** : l'éditer dans `lib/resources.ts`, puis `npm run check` et `npm run catalog:check`. L'identifiant de progression dérive de l'URL : changer de protocole (http → https) le conserve, changer d'adresse crée une nouvelle ressource.
+
+### Migrations Supabase
+
+À exécuter dans l'ordre, dans Supabase Dashboard → SQL Editor. Toutes sont idempotentes.
+
+| Fichier | Contenu |
+|---|---|
+| `0001_init.sql` | Profils, rôles, matricules, RLS |
+| `0002_progress.sql` | Progression des apprenants (`resource_progress`) |
+| `0003_student_profile_complete.sql` | Rattrapage : profils étudiants déjà complets |
 
 ## 🚀 Déploiement (Vercel)
 
@@ -108,12 +130,7 @@ vercel
 - **Système de rôles** : `superuser` | `admin` | `user`
 - **Base de données** locale (localStorage) avec CRUD complet
 - Méthodes exposées : `getAllUsers()`, `createUser()`, `updateUser()`, `deleteUser()`
-- **Comptes par défaut** (créés automatiquement au premier lancement) :
-  | Email | Mot de passe | Rôle |
-  |-------|-------------|------|
-  | superuser@providence.academy | super123 | Super Admin |
-  | admin@providence.academy | admin123 | Admin |
-  | demo@providence.academy | demo123 | Utilisateur |
+- **Comptes de démonstration** : `superuser@`, `admin@` et `demo@providence.academy`, créés par `scripts/seed-demo-users.mjs`. Mots de passe fournis par variables d'environnement, jamais dans le dépôt.
 
 ---
 
@@ -173,5 +190,5 @@ providence-client/
 1. Copiez chaque fichier dans le bon emplacement
 2. `npm install` (pas de nouvelles dépendances)
 3. `npm run dev`
-4. Connectez-vous avec `superuser@providence.academy` / `super123`
+4. Connectez-vous avec `superuser@providence.academy` et le mot de passe défini via `SEED_SUPERUSER_PASSWORD`
 5. Allez sur `/dashboard/admin` pour gérer les utilisateurs

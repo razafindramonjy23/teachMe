@@ -23,15 +23,10 @@
 
 ### Pour le Personnel (Mpiasa)
 
-**Inscription (une seule fois):**
-- URL: `http://localhost:3000/register`
-- Sélectionnez "Personnel"
-- Remplissez le formulaire:
-  - Nom complet
-  - Email
-  - Mot de passe
-  - Confirmez le mot de passe
-- Cliquez "S'inscrire"
+**Obtenir un compte :**
+- Il n'y a pas d'inscription publique. Un administrateur crée le compte depuis
+  `/dashboard/admin` → « Nouvel utilisateur », puis vous transmet l'email et le
+  mot de passe initial.
 
 **Connexion:**
 - URL: `http://localhost:3000/auth`
@@ -44,15 +39,10 @@
 
 ### Pour les Parents (Ray aman-dreny)
 
-**Inscription (une seule fois):**
-- URL: `http://localhost:3000/register`
-- Sélectionnez "Parent"
-- Remplissez le formulaire:
-  - Nom complet
-  - Email
-  - Mot de passe
-  - Confirmez le mot de passe
-- Cliquez "S'inscrire"
+**Obtenir un compte :**
+- Il n'y a pas d'inscription publique. Un administrateur crée le compte depuis
+  `/dashboard/admin` → « Nouvel utilisateur », puis vous transmet l'email et le
+  mot de passe initial.
 
 **Connexion:**
 - URL: `http://localhost:3000/auth`
@@ -82,17 +72,15 @@ Format: **PA-XXX-STU-MMYY-###**
 
 ## 🔐 Comptes de Test
 
-### Admin
-- **Email:** `admin@providence.academy`
-- **Mot de passe:** `admin123`
+| Rôle | Email |
+|---|---|
+| Super Admin | `superuser@providence.academy` |
+| Admin | `admin@providence.academy` |
+| Utilisateur démo | `demo@providence.academy` |
 
-### Super Admin
-- **Email:** `superuser@providence.academy`
-- **Mot de passe:** `super123`
-
-### Utilisateur Démo
-- **Email:** `demo@providence.academy`
-- **Mot de passe:** `demo123`
+Les mots de passe ne figurent pas ici : ce dépôt est public. Ils sont définis au
+moment de lancer `scripts/seed-demo-users.mjs` (variables `SEED_*_PASSWORD`) et
+communiqués par l'administrateur.
 
 ---
 
