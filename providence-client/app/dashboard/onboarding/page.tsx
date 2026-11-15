@@ -105,7 +105,7 @@ export default function OnboardingPage() {
                 ))}
               </select>
               <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                Sélectionnez votre site d'apprentissage
+                Sélectionnez votre site d’apprentissage
               </p>
             </div>
 
@@ -124,7 +124,7 @@ export default function OnboardingPage() {
                 ))}
               </select>
               <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                Choisissez votre niveau d'études
+                Choisissez votre niveau d’études
               </p>
             </div>
 

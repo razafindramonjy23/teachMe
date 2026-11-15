@@ -21,7 +21,7 @@ export default function ContactPage() {
           Entrez en contact
         </h1>
         <p className="text-lg mb-10" style={{ color: 'var(--text-secondary)' }}>
-          Une question ? Besoin d'aide ? Notre équipe est là pour vous.
+          Une question ? Besoin d’aide ? Notre équipe est là pour vous.
         </p>
       </motion.div>
 
