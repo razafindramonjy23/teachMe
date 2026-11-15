@@ -88,6 +88,18 @@ lib/
 | `/dashboard/levels/cae` | C1 Advanced (CAE) |
 | `/dashboard/levels/ielts` | IELTS Preparation |
 
+## 🗺 Parcours guidé ou accès libre
+
+À sa première connexion, l'apprenant choisit son mode d'accueil ; il peut en changer à tout moment depuis l'accueil. Les deux modes partagent la même progression, seule la couche de jeu change.
+
+- **Parcours guidé** : chemin A1 → C1 avec une étape recommandée (jamais de verrou), objectif de 2 ressources par jour, série de jours, pages tournées (10 par ressource), carnet de tampons, célébrations à la coche.
+- **Accès libre** : l'accueil historique, sans objectif ni série.
+
+Règles de calcul (`lib/gamification.ts`, testées dans `tests/gamification.test.ts`) :
+- les jours sont ceux de Madagascar (`Indian/Antananarivo`) ;
+- une série compte les jours consécutifs avec au moins une ressource terminée ; elle tient tant que la veille compte ;
+- les dates de coche sont fixées par la base (migration 0004) : impossible d'antidater une coche.
+
 ## ✅ Qualité et vérifications
 
 Prérequis : **Node ≥ 22.18** pour les tests (exécution native du TypeScript, aucune dépendance de test).
@@ -115,6 +127,7 @@ La CI GitHub (`.github/workflows/check.yml`) lance `check` à chaque push sur `m
 | `0001_init.sql` | Profils, rôles, matricules, RLS |
 | `0002_progress.sql` | Progression des apprenants (`resource_progress`) |
 | `0003_student_profile_complete.sql` | Rattrapage : profils étudiants déjà complets |
+| `0004_parcours.sql` | Mode d'accueil (`profiles.home_mode`) et horodatages de progression fixés par le serveur |
 
 ## 🚀 Déploiement (Vercel)
 

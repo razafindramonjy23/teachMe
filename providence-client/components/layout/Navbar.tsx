@@ -77,6 +77,11 @@ export function Navbar() {
               </AnimatePresence>
             </div>
 
+            {user?.homeMode === 'parcours' && (
+              <Link href="/dashboard/tampons" className="text-sm text-[var(--text-secondary)] hover:text-coral transition-colors">
+                Tampons
+              </Link>
+            )}
             <Link href="/dashboard/rules" className="text-sm text-[var(--text-secondary)] hover:text-coral transition-colors">
               Règles
             </Link>
@@ -158,6 +163,12 @@ export function Navbar() {
                 </Link>
               ))}
               <div className="coral-divider my-2" />
+              {user?.homeMode === 'parcours' && (
+                <Link href="/dashboard/tampons" onClick={() => setMobileOpen(false)}
+                  className="px-3 py-2 text-sm text-[var(--text-secondary)] hover:text-coral transition-colors rounded-lg hover:bg-coral/10">
+                  Tampons
+                </Link>
+              )}
               <Link href="/dashboard/rules" onClick={() => setMobileOpen(false)}
                 className="px-3 py-2 text-sm text-[var(--text-secondary)] hover:text-coral transition-colors rounded-lg hover:bg-coral/10">
                 Règles
