@@ -15,10 +15,10 @@ const LEVELS = [
   'Upper-Intermediate', 'Advanced', 'Aviation', 'Business', 'CAE', 'IELTS'
 ]
 
-const ROLE_LABELS: Record<UserRole, { label: string; color: string; icon: typeof Shield }> = {
-  superuser: { label: 'Super Admin', color: '#c084fc', icon: ShieldCheck },
-  admin: { label: 'Admin', color: '#e8735a', icon: Shield },
-  user: { label: 'Utilisateur', color: '#60a5fa', icon: User },
+const ROLE_LABELS: Record<UserRole, { label: string; accent: string; icon: typeof Shield }> = {
+  superuser: { label: 'Super Admin', accent: 'purple', icon: ShieldCheck },
+  admin: { label: 'Admin', accent: 'coral', icon: Shield },
+  user: { label: 'Utilisateur', accent: 'blue', icon: User },
 }
 
 type ModalMode = 'create' | 'edit' | null
@@ -210,7 +210,7 @@ export default function AdminPage() {
             style={{
               background: 'var(--bg-card)',
               borderColor: toast.type === 'success' ? '#4ade8040' : '#f8717140',
-              color: toast.type === 'success' ? '#4ade80' : '#f87171',
+              color: toast.type === 'success' ? 'var(--acc-green)' : 'var(--acc-red)',
             }}
           >
             {toast.type === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
@@ -223,7 +223,7 @@ export default function AdminPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(232,115,90,0.15)' }}>
-            <Users size={20} style={{ color: '#e8735a' }} />
+            <Users size={20} style={{ color: 'var(--coral-text)' }} />
           </div>
           <div>
             <h1 className="font-display text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>Gestion des utilisateurs</h1>
@@ -237,15 +237,15 @@ export default function AdminPage() {
         <div className="grid grid-cols-3 gap-3 mt-6">
           {(['superuser', 'admin', 'user'] as UserRole[]).map(role => {
             const count = users.filter(u => u.role === role).length
-            const { label, color, icon: Icon } = ROLE_LABELS[role]
+            const { label, accent, icon: Icon } = ROLE_LABELS[role]
             return (
               <div key={role} className="rounded-xl p-4 flex items-center gap-3"
                 style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${color}15` }}>
-                  <Icon size={16} style={{ color }} />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `var(--acc-${accent}-soft)` }}>
+                  <Icon size={16} style={{ color: `var(--acc-${accent})` }} />
                 </div>
                 <div>
-                  <p className="font-bold text-lg font-display" style={{ color: 'var(--text-primary)' }}>{count}</p>
+                  <p className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>{count}</p>
                   <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</p>
                 </div>
               </div>
@@ -290,7 +290,7 @@ export default function AdminPage() {
             </thead>
             <tbody>
               {filtered.map((u, i) => {
-                const { label, color, icon: RoleIcon } = ROLE_LABELS[u.role]
+                const { label, accent, icon: RoleIcon } = ROLE_LABELS[u.role]
                 return (
                   <motion.tr key={u.id}
                     initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
@@ -301,12 +301,12 @@ export default function AdminPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
-                          style={{ background: `${color}20`, color }}>
+                          style={{ background: `var(--acc-${accent}-soft)`, color: `var(--acc-${accent})` }}>
                           {u.name.charAt(0).toUpperCase()}
                         </div>
                         <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{u.name}</span>
                         {u.id === user.id && (
-                          <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(232,115,90,0.15)', color: '#e8735a' }}>Vous</span>
+                          <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--acc-coral-soft)', color: 'var(--coral-text)' }}>Vous</span>
                         )}
                       </div>
                     </td>
@@ -314,7 +314,7 @@ export default function AdminPage() {
                     <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-secondary)' }}>{u.level}</td>
                     <td className="px-4 py-3">
                       <span className="flex items-center gap-1 w-fit px-2 py-1 rounded-lg text-xs font-medium"
-                        style={{ background: `${color}15`, color, border: `1px solid ${color}30` }}>
+                        style={{ background: `var(--acc-${accent}-soft)`, color: `var(--acc-${accent})`, border: `1px solid var(--acc-${accent}-line)` }}>
                         <RoleIcon size={11} /> {label}
                       </span>
                     </td>
@@ -326,14 +326,16 @@ export default function AdminPage() {
                         {canManageRole(u.role) && (
                           <>
                             <button onClick={() => openEdit(u)}
-                              className="p-1.5 rounded-lg transition-colors hover:bg-coral/10"
-                              style={{ color: 'var(--text-muted)' }} title="Modifier">
+                              className="tap-target rounded-lg transition-colors hover:bg-coral/10"
+                              style={{ color: 'var(--text-muted)' }}
+                              title="Modifier" aria-label={`Modifier ${u.name}`}>
                               <Pencil size={14} />
                             </button>
                             {u.id !== user.id && u.role !== 'superuser' && (
                               <button onClick={() => setConfirmDelete(u.id)}
-                                className="p-1.5 rounded-lg transition-colors hover:bg-red-500/10 hover:text-red-400"
-                                style={{ color: 'var(--text-muted)' }} title="Supprimer">
+                                className="tap-target rounded-lg transition-colors hover:bg-red-500/10 hover:text-red-400"
+                                style={{ color: 'var(--text-muted)' }}
+                                title="Supprimer" aria-label={`Supprimer ${u.name}`}>
                                 <Trash2 size={14} />
                               </button>
                             )}
@@ -369,10 +371,11 @@ export default function AdminPage() {
               style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
             >
               <div className="flex items-center justify-between mb-5">
-                <h2 className="font-display text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                <h2 className="font-semibold text-xl" style={{ color: 'var(--text-primary)' }}>
                   {modal === 'create' ? 'Créer un utilisateur' : "Modifier l'utilisateur"}
                 </h2>
-                <button onClick={closeModal} className="p-1.5 rounded-lg hover:bg-coral/10 transition-colors"
+                <button onClick={closeModal} aria-label="Fermer"
+                  className="tap-target rounded-lg hover:bg-coral/10 transition-colors"
                   style={{ color: 'var(--text-muted)' }}><X size={16} /></button>
               </div>
 
@@ -554,7 +557,7 @@ export default function AdminPage() {
               <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(248,113,113,0.1)' }}>
                 <Trash2 size={20} className="text-red-400" />
               </div>
-              <h3 className="font-display font-bold text-lg mb-2" style={{ color: 'var(--text-primary)' }}>Confirmer la suppression</h3>
+              <h3 className="font-semibold text-lg mb-2" style={{ color: 'var(--text-primary)' }}>Confirmer la suppression</h3>
               <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>Cette action est irréversible.</p>
               <div className="flex gap-3">
                 <button onClick={() => setConfirmDelete(null)}

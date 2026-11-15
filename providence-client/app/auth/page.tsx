@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Eye, EyeOff, Mail, Lock, User, AlertCircle, ChevronRight } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, User, AlertCircle, ChevronRight, KeyRound } from 'lucide-react'
 import { useAuth, USER_KEY } from '@/lib/auth'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { LogoMark, Wordmark } from '@/components/brand/Logo'
@@ -204,6 +204,7 @@ function AuthPageInner() {
                     type="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
+                    autoComplete="email"
                     placeholder="vous@exemple.com"
                     className="w-full pl-9 pr-4 py-3 rounded-xl text-sm outline-none transition-all"
                     style={{
@@ -218,6 +219,7 @@ function AuthPageInner() {
                       type="text"
                       value={matricule}
                       onChange={e => setMatricule(e.target.value.toUpperCase())}
+                      autoComplete="username"
                       placeholder="PA-010-STU-2603-045"
                       className="w-full pl-9 pr-4 py-3 rounded-xl text-sm outline-none transition-all font-mono"
                       style={{
@@ -246,6 +248,7 @@ function AuthPageInner() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
+                  autoComplete="current-password"
                   placeholder="••••••••"
                   className="w-full pl-9 pr-10 py-3 rounded-xl text-sm outline-none transition-all"
                   style={{
@@ -257,7 +260,9 @@ function AuthPageInner() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+                  aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  aria-pressed={showPassword}
+                  className="tap-target absolute right-1 top-1/2 -translate-y-1/2 rounded-lg transition-colors"
                   style={{ color: 'var(--text-muted)' }}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -303,10 +308,12 @@ function AuthPageInner() {
           <div className="mt-6 p-4 rounded-xl border" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
             <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Compte démo :</p>
             <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-              📧 <span className="font-mono">demo@providence.academy</span>
+              <Mail size={13} aria-hidden="true" className="inline-block mr-1 align-[-2px]" />
+              <span className="font-mono">demo@providence.academy</span>
             </p>
             <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-              🔑 <span className="font-mono">demo123</span>
+              <KeyRound size={13} aria-hidden="true" className="inline-block mr-1 align-[-2px]" />
+              <span className="font-mono">demo123</span>
             </p>
           </div>
 

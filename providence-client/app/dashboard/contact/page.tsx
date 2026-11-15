@@ -16,7 +16,7 @@ export default function ContactPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <p className="text-sm font-medium mb-2" style={{ color: '#e8735a' }}>Nous contacter</p>
+        <p className="text-sm font-medium mb-2" style={{ color: 'var(--coral-text)' }}>Nous contacter</p>
         <h1 className="font-display text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
           Entrez en contact
         </h1>
@@ -30,23 +30,23 @@ export default function ContactPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         {/* Info */}
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
-          <h2 className="font-display text-xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="font-semibold text-xl mb-6" style={{ color: 'var(--text-primary)' }}>
             teachMe Madagascar
           </h2>
           <div className="flex flex-col gap-4">
             {[
-              { icon: MapPin, label: 'Adresse', value: 'Antananarivo, Madagascar', color: '#ef4444' },
-              { icon: Phone, label: 'Téléphone', value: '+261 34 00 000 00', color: '#60a5fa' },
-              { icon: Mail, label: 'Email', value: 'test@gmail.com', color: '#e8735a' },
-              { icon: Clock, label: 'Heures', value: 'Lun–Ven : 8h–17h', color: '#4ade80' },
+              { icon: MapPin, label: 'Adresse', value: 'Antananarivo, Madagascar', accent: 'coral' },
+              { icon: Phone, label: 'Téléphone', value: '+261 34 00 000 00', accent: 'coral' },
+              { icon: Mail, label: 'Email', value: 'test@gmail.com', accent: 'coral' },
+              { icon: Clock, label: 'Heures', value: 'Lun–Ven : 8h–17h', accent: 'coral' },
             ].map(item => (
               <div key={item.label} className="flex items-center gap-4 p-4 rounded-xl"
                 style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
               >
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: `${item.color}15` }}
+                  style={{ background: `var(--acc-${item.accent}-soft)` }}
                 >
-                  <item.icon size={18} style={{ color: item.color }} />
+                  <item.icon size={18} style={{ color: `var(--acc-${item.accent})` }} />
                 </div>
                 <div>
                   <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{item.label}</p>
@@ -67,9 +67,9 @@ export default function ContactPage() {
                 <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
                   style={{ background: 'rgba(232,115,90,0.15)' }}
                 >
-                  <Send size={24} style={{ color: '#e8735a' }} />
+                  <Send size={24} style={{ color: 'var(--coral-text)' }} />
                 </div>
-                <h3 className="font-display text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+                <h3 className="font-semibold text-xl mb-2" style={{ color: 'var(--text-primary)' }}>
                   Message envoyé !
                 </h3>
                 <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
@@ -81,7 +81,7 @@ export default function ContactPage() {
             <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-6 rounded-xl"
               style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
             >
-              <h3 className="font-display font-bold text-lg mb-2" style={{ color: 'var(--text-primary)' }}>
+              <h3 className="font-semibold text-lg mb-2" style={{ color: 'var(--text-primary)' }}>
                 Envoyez un message
               </h3>
               {[

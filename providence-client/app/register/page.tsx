@@ -181,6 +181,7 @@ export default function RegisterPage() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  autoComplete="name"
                   placeholder="Votre nom complet"
                   className="w-full pl-9 pr-4 py-3 rounded-xl text-sm outline-none transition-all"
                   style={{
@@ -203,6 +204,7 @@ export default function RegisterPage() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  autoComplete="email"
                   placeholder="vous@exemple.com"
                   className="w-full pl-9 pr-4 py-3 rounded-xl text-sm outline-none transition-all"
                   style={{
@@ -225,6 +227,7 @@ export default function RegisterPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  autoComplete="new-password"
                   placeholder="••••••••"
                   className="w-full pl-9 pr-10 py-3 rounded-xl text-sm outline-none transition-all"
                   style={{
@@ -236,7 +239,9 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+                  aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  aria-pressed={showPassword}
+                  className="tap-target absolute right-1 top-1/2 -translate-y-1/2 rounded-lg transition-colors"
                   style={{ color: 'var(--text-muted)' }}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -255,6 +260,7 @@ export default function RegisterPage() {
                   type="password"
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  autoComplete="new-password"
                   placeholder="••••••••"
                   className="w-full pl-9 pr-4 py-3 rounded-xl text-sm outline-none transition-all"
                   style={{

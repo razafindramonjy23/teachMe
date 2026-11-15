@@ -7,22 +7,8 @@ import { Menu, X, LogOut, ChevronDown, Shield, ShieldCheck } from 'lucide-react'
 import { ThemeToggle } from '../ui/ThemeToggle'
 import { Logo, LogoMark, Wordmark } from '../brand/Logo'
 import { useAuth } from '@/lib/auth'
+import { LEVELS, COURSES } from '@/lib/catalog'
 
-const levels = [
-  { name: 'Beginner', href: '/dashboard/levels/beginner', color: '#4ade80', code: 'A1' },
-  { name: 'Elementary', href: '/dashboard/levels/elementary', color: '#60a5fa', code: 'A2' },
-  { name: 'Pre-Intermediate', href: '/dashboard/levels/pre-intermediate', color: '#a78bfa', code: 'B1-' },
-  { name: 'Intermediate', href: '/dashboard/levels/intermediate', color: '#f59e0b', code: 'B1' },
-  { name: 'Upper-Intermediate', href: '/dashboard/levels/upper-intermediate', color: '#f97316', code: 'B2' },
-  { name: 'Advanced', href: '/dashboard/levels/advanced', color: '#ef4444', code: 'C1' },
-]
-
-const specialCourses = [
-  { name: 'Aviation', href: '/dashboard/levels/aviation' },
-  { name: 'Business', href: '/dashboard/levels/business' },
-  { name: 'C1 Advanced (CAE)', href: '/dashboard/levels/cae' },
-  { name: 'IELTS', href: '/dashboard/levels/ielts' },
-]
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -65,11 +51,11 @@ export function Navbar() {
                       Niveaux généraux
                     </p>
                     <div className="grid grid-cols-1 gap-0.5">
-                      {levels.map(l => (
+                      {LEVELS.map(l => (
                         <Link key={l.href} href={l.href}
                           className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:bg-coral/10 hover:text-coral transition-colors"
                         >
-                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: l.color }} />
+                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: `var(--acc-${l.accent})` }} />
                           {l.name}
                           <span className="ml-auto text-xs font-mono opacity-50">{l.code}</span>
                         </Link>
@@ -78,11 +64,11 @@ export function Navbar() {
                       <p className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
                         Cours spécialisés
                       </p>
-                      {specialCourses.map(c => (
+                      {COURSES.map(c => (
                         <Link key={c.href} href={c.href}
                           className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:bg-coral/10 hover:text-coral transition-colors"
                         >
-                          {c.name}
+                          {c.shortName}
                         </Link>
                       ))}
                     </div>
@@ -101,7 +87,7 @@ export function Navbar() {
             {isAdmin && (
               <Link href="/dashboard/admin"
                 className="flex items-center gap-1.5 text-sm transition-colors font-medium"
-                style={{ color: user?.role === 'superuser' ? '#c084fc' : '#e8735a' }}
+                style={{ color: user?.role === 'superuser' ? 'var(--acc-purple)' : 'var(--coral-text)' }}
               >
                 {user?.role === 'superuser' ? <ShieldCheck size={14} /> : <Shield size={14} />}
                 Admin
@@ -118,14 +104,18 @@ export function Navbar() {
                   <p className="text-xs text-[var(--text-muted)]">{user.level}</p>
                   <p className="text-sm font-medium text-[var(--text-primary)]">{user.name}</p>
                 </div>
-                <button onClick={logout} className="p-2 rounded-lg text-[var(--text-muted)] hover:text-coral hover:bg-coral/10 transition-colors">
+                <button onClick={logout} aria-label="Se déconnecter"
+                  className="tap-target rounded-lg text-[var(--text-muted)] hover:text-coral hover:bg-coral/10 transition-colors">
                   <LogOut size={16} />
                 </button>
               </div>
             )}
             <button
-              className="md:hidden p-2 rounded-lg text-[var(--text-secondary)] hover:text-coral transition-colors"
+              className="tap-target md:hidden rounded-lg text-[var(--text-secondary)] hover:text-coral transition-colors"
               onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+              aria-expanded={mobileOpen}
+              aria-controls="menu-mobile"
             >
               {mobileOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -140,6 +130,7 @@ export function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
+            id="menu-mobile"
             className="md:hidden border-t border-[var(--border)] bg-[var(--bg-card)]"
           >
             <div className="px-4 py-4 flex flex-col gap-1">
@@ -148,22 +139,22 @@ export function Navbar() {
               </div>
               <div className="coral-divider mb-2" />
               <p className="px-3 py-1 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Niveaux</p>
-              {levels.map(item => (
+              {LEVELS.map(item => (
                 <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] hover:text-coral transition-colors rounded-lg hover:bg-coral/10"
                 >
-                  <span className="w-2 h-2 rounded-full" style={{ background: item.color }} />
+                  <span className="w-2 h-2 rounded-full" style={{ background: `var(--acc-${item.accent})` }} />
                   {item.name}
                   <span className="ml-auto text-xs font-mono opacity-50">{item.code}</span>
                 </Link>
               ))}
               <div className="coral-divider my-2" />
               <p className="px-3 py-1 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Spécialisés</p>
-              {specialCourses.map(item => (
+              {COURSES.map(item => (
                 <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
                   className="px-3 py-2 text-sm text-[var(--text-secondary)] hover:text-coral transition-colors rounded-lg hover:bg-coral/10"
                 >
-                  {item.name}
+                  {item.shortName}
                 </Link>
               ))}
               <div className="coral-divider my-2" />
@@ -178,7 +169,7 @@ export function Navbar() {
               {isAdmin && (
                 <Link href="/dashboard/admin" onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-coral/10 transition-colors"
-                  style={{ color: user?.role === 'superuser' ? '#c084fc' : '#e8735a' }}>
+                  style={{ color: user?.role === 'superuser' ? 'var(--acc-purple)' : 'var(--coral-text)' }}>
                   {user?.role === 'superuser' ? <ShieldCheck size={14} /> : <Shield size={14} />}
                   Administration
                 </Link>

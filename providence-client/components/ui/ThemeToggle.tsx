@@ -18,9 +18,11 @@ export function ThemeToggle() {
     <motion.button
       whileTap={{ scale: 0.9 }}
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      className="relative w-12 h-6 rounded-full border border-coral/40 bg-navy/20 dark:bg-coral/10 flex items-center px-1 transition-colors"
-      aria-label="Toggle theme"
+      className="tap-target rounded-full"
+      aria-label={isDark ? 'Passer en thème clair' : 'Passer en thème sombre'}
+      aria-pressed={isDark}
     >
+      <span className="relative w-12 h-6 rounded-full border border-coral/40 bg-navy/20 dark:bg-coral/10 flex items-center px-1 transition-colors">
       <motion.div
         layout
         className="w-4 h-4 rounded-full bg-coral flex items-center justify-center"
@@ -39,6 +41,7 @@ export function ThemeToggle() {
           )}
         </AnimatePresence>
       </motion.div>
+      </span>
     </motion.button>
   )
 }

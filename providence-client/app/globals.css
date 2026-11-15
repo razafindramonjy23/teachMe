@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -15,9 +13,6 @@
    =========================================================== */
 
 :root {
-  --font-display: 'Playfair Display', serif;
-  --font-body: 'DM Sans', sans-serif;
-
   /* Couleurs de marque */
   --coral: #e8735a;
   --coral-deep: #c2553e;
@@ -30,9 +25,42 @@
   --bg-card: #ffffff;
   --text-primary: #1b2a4a;
   --text-secondary: #4a5468;
-  --text-muted: #7a8599;
+  --text-muted: #667085;
   --border: rgba(27, 42, 74, 0.12);
   --shadow: 0 4px 24px rgba(27, 42, 74, 0.08);
+
+  /* Accents de catégorie — variantes mode clair (toutes ≥ 4.5:1 sur crème/carte) */
+  --acc-green: #15803d;
+  --acc-green-soft: rgba(21, 128, 61, 0.10);
+  --acc-green-line: rgba(21, 128, 61, 0.24);
+  --acc-blue: #2563eb;
+  --acc-blue-soft: rgba(37, 99, 235, 0.10);
+  --acc-blue-line: rgba(37, 99, 235, 0.24);
+  --acc-violet: #7c3aed;
+  --acc-violet-soft: rgba(124, 58, 237, 0.10);
+  --acc-violet-line: rgba(124, 58, 237, 0.24);
+  --acc-amber: #b45309;
+  --acc-amber-soft: rgba(180, 83, 9, 0.10);
+  --acc-amber-line: rgba(180, 83, 9, 0.24);
+  --acc-orange: #c2410c;
+  --acc-orange-soft: rgba(194, 65, 12, 0.10);
+  --acc-orange-line: rgba(194, 65, 12, 0.24);
+  --acc-red: #b91c1c;
+  --acc-red-soft: rgba(185, 28, 28, 0.10);
+  --acc-red-line: rgba(185, 28, 28, 0.24);
+  --acc-cyan: #0e7490;
+  --acc-cyan-soft: rgba(14, 116, 144, 0.10);
+  --acc-cyan-line: rgba(14, 116, 144, 0.24);
+  --acc-emerald: #047857;
+  --acc-emerald-soft: rgba(4, 120, 87, 0.10);
+  --acc-emerald-line: rgba(4, 120, 87, 0.24);
+  --acc-purple: #7e22ce;
+  --acc-purple-soft: rgba(126, 34, 206, 0.10);
+  --acc-purple-line: rgba(126, 34, 206, 0.24);
+  --acc-coral: #b44b35;
+  --acc-coral-soft: rgba(180, 75, 53, 0.10);
+  --acc-coral-line: rgba(180, 75, 53, 0.24);
+  --coral-text: var(--acc-coral);
 }
 
 .dark {
@@ -41,9 +69,42 @@
   --bg-card: #22355a;
   --text-primary: #f7f5f0;
   --text-secondary: #c3ccda;
-  --text-muted: #8a98b0;
+  --text-muted: #97a4ba;
   --border: rgba(232, 115, 90, 0.28);
   --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+
+  /* Accents de catégorie — variantes mode sombre (toutes ≥ 4.5:1 sur carte) */
+  --acc-green: #4ade80;
+  --acc-green-soft: rgba(74, 222, 128, 0.16);
+  --acc-green-line: rgba(74, 222, 128, 0.32);
+  --acc-blue: #60a5fa;
+  --acc-blue-soft: rgba(96, 165, 250, 0.16);
+  --acc-blue-line: rgba(96, 165, 250, 0.32);
+  --acc-violet: #b69dfb;
+  --acc-violet-soft: rgba(182, 157, 251, 0.16);
+  --acc-violet-line: rgba(182, 157, 251, 0.32);
+  --acc-amber: #f59e0b;
+  --acc-amber-soft: rgba(245, 158, 11, 0.16);
+  --acc-amber-line: rgba(245, 158, 11, 0.32);
+  --acc-orange: #fb923c;
+  --acc-orange-soft: rgba(251, 146, 60, 0.16);
+  --acc-orange-line: rgba(251, 146, 60, 0.32);
+  --acc-red: #fca5a5;
+  --acc-red-soft: rgba(252, 165, 165, 0.16);
+  --acc-red-line: rgba(252, 165, 165, 0.32);
+  --acc-cyan: #38bdf8;
+  --acc-cyan-soft: rgba(56, 189, 248, 0.16);
+  --acc-cyan-line: rgba(56, 189, 248, 0.32);
+  --acc-emerald: #34d399;
+  --acc-emerald-soft: rgba(52, 211, 153, 0.16);
+  --acc-emerald-line: rgba(52, 211, 153, 0.32);
+  --acc-purple: #c084fc;
+  --acc-purple-soft: rgba(192, 132, 252, 0.16);
+  --acc-purple-line: rgba(192, 132, 252, 0.32);
+  --acc-coral: #f08a74;
+  --acc-coral-soft: rgba(240, 138, 116, 0.16);
+  --acc-coral-line: rgba(240, 138, 116, 0.32);
+  --coral-text: var(--acc-coral);
 }
 
 * {
@@ -146,4 +207,69 @@ body {
 .brand-wordmark.on-dark .brand-accent,
 .dark .brand-wordmark.on-dark .brand-accent {
   color: #e8735a;
+}
+
+/* ===========================================================
+   Accessibilité
+   =========================================================== */
+
+/* Focus clavier visible sur tout contrôle opérable (WCAG 2.4.7) */
+:where(a, button, input, select, textarea, summary, [role='button'], [tabindex]:not([tabindex='-1'])):focus-visible {
+  outline: 2px solid var(--acc-coral);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Cible de pointage confortable pour les boutons icône (WCAG 2.5.8) */
+.tap-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Respect de prefers-reduced-motion (WCAG 2.3.3) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .card-glow:hover {
+    transform: none;
+  }
+}
+
+/* Squelettes de chargement */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 25%,
+    var(--bg-card) 37%,
+    var(--bg-secondary) 63%
+  );
+  background-size: 400% 100%;
+  animation: skeleton-sweep 1.4s ease infinite;
+}
+
+@keyframes skeleton-sweep {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+/* Texte réservé aux lecteurs d'écran */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }

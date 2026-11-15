@@ -2,32 +2,32 @@
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { BookOpen, Trophy, Target, Zap, ArrowRight, Globe, Briefcase, Plane, GraduationCap } from 'lucide-react'
+import { BookOpen, Target, CheckCircle2, ArrowRight, Globe, Briefcase, Plane, GraduationCap, PlayCircle } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
+import { LEVELS, COURSES, type CourseItem } from '@/lib/catalog'
+import { levelData, levelResourceCount, totalResourceCount, resourceId } from '@/lib/resources'
+import { useProgress } from '@/lib/progress'
 
+const COURSE_ICONS: Record<CourseItem['iconName'], typeof Plane> = {
+  plane: Plane,
+  briefcase: Briefcase,
+  graduation: GraduationCap,
+  globe: Globe,
+}
 
-const levels = [
-  { name: 'Beginner', code: 'A1', color: '#4ade80', desc: 'Pour les débutants complets', href: '/dashboard/levels/beginner', count: 45 },
-  { name: 'Elementary', code: 'A2', color: '#60a5fa', desc: 'Bases solides de l\'anglais', href: '/dashboard/levels/elementary', count: 62 },
-  { name: 'Pre-Intermediate', code: 'B1-', color: '#a78bfa', desc: 'Développez votre vocabulaire', href: '/dashboard/levels/pre-intermediate', count: 78 },
-  { name: 'Intermediate', code: 'B1', color: '#f59e0b', desc: 'Communiquez avec confiance', href: '/dashboard/levels/intermediate', count: 91 },
-  { name: 'Upper-Intermediate', code: 'B2', color: '#f97316', desc: 'Maîtrisez les nuances', href: '/dashboard/levels/upper-intermediate', count: 84 },
-  { name: 'Advanced', code: 'C1', color: '#ef4444', desc: 'Perfectionnez votre anglais', href: '/dashboard/levels/advanced', count: 67 },
-]
-
-const specialCourses = [
-  { name: 'Aviation English', icon: Plane, color: '#38bdf8', desc: 'Phraséologie et communications aériennes', href: '/dashboard/levels/aviation' },
-  { name: 'Business English', icon: Briefcase, color: '#34d399', desc: 'Anglais professionnel et commercial', href: '/dashboard/levels/business' },
-  { name: 'C1 Advanced (CAE)', icon: GraduationCap, color: '#c084fc', desc: 'Préparation à la certification Cambridge', href: '/dashboard/levels/cae' },
-  { name: 'IELTS Preparation', icon: Globe, color: '#e8735a', desc: 'Atteignez le score IELTS visé', href: '/dashboard/levels/ielts' },
-]
-
-const stats = [
-  { label: 'Exercices', value: '500+', icon: Zap },
-  { label: 'Niveaux', value: '6', icon: Target },
-  { label: 'Cours spéciaux', value: '4', icon: BookOpen },
-  { label: 'Certifications', value: '2', icon: Trophy },
-]
+/** Retrouve le titre et le niveau d'une ressource à partir de son identifiant. */
+function findResource(id: string) {
+  for (const [slug, level] of Object.entries(levelData)) {
+    for (const cat of level.categories) {
+      for (const link of cat.links) {
+        if (resourceId(slug, cat.label, link.title) === id) {
+          return { slug, levelName: level.name, accent: level.accent, title: link.title, url: link.url, category: cat.label }
+        }
+      }
+    }
+  }
+  return null
+}
 
 const container = {
   hidden: { opacity: 0 },
@@ -40,6 +40,17 @@ const item = {
 
 export default function DashboardHome() {
   const { user } = useAuth()
+  const { totalDone, doneCountForLevel, lastOpened, markOpened } = useProgress()
+
+  const totalResources = totalResourceCount()
+  const resume = lastOpened ? findResource(lastOpened.resourceId) : null
+
+  const stats = [
+    { label: 'ressources terminées', value: String(totalDone), icon: CheckCircle2 },
+    { label: 'ressources au catalogue', value: String(totalResources), icon: BookOpen },
+    { label: 'niveaux', value: String(LEVELS.length), icon: Target },
+    { label: 'parcours spécialisés', value: String(COURSES.length), icon: Globe },
+  ]
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -48,23 +59,22 @@ export default function DashboardHome() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="mb-14 relative"
+        className="mb-10 relative"
       >
-        <div className="absolute -top-4 -left-4 w-72 h-72 rounded-full pointer-events-none"
+        <div className="absolute -top-4 -left-4 w-56 h-56 rounded-full pointer-events-none"
           style={{ background: 'radial-gradient(circle, rgba(232,115,90,0.08) 0%, transparent 70%)' }}
         />
-        <p className="text-sm font-medium mb-3" style={{ color: '#e8735a' }}>
-          Bienvenue, {user?.name} 👋
+        <p className="text-sm font-medium mb-2" style={{ color: 'var(--coral-text)' }}>
+          Bienvenue, {user?.name} <span aria-hidden="true">👋</span>
         </p>
-        <h1 className="font-display text-4xl md:text-5xl font-bold leading-tight mb-4" style={{ color: 'var(--text-primary)' }}>
-          Pratiquez votre<br />
-          <span className="shimmer-text">anglais en ligne.</span>
+        <h1 className="font-display text-3xl md:text-4xl font-bold leading-tight mb-3" style={{ color: 'var(--text-primary)' }}>
+          Pratiquez votre <span className="shimmer-text">anglais en ligne.</span>
         </h1>
-        <p className="text-lg max-w-xl" style={{ color: 'var(--text-secondary)' }}>
-          Explorez des exercices, tests et jeux pour tous les niveaux. Choisissez votre parcours et commencez à progresser dès maintenant.
+        <p className="text-base max-w-xl" style={{ color: 'var(--text-secondary)' }}>
+          Exercices, tests et jeux pour tous les niveaux — choisissez votre parcours.
         </p>
 
-        <div className="flex gap-3 mt-6">
+        <div className="flex gap-3 mt-5">
           <Link href="/dashboard/levels/beginner">
             <motion.button
               whileHover={{ scale: 1.03 }}
@@ -88,27 +98,65 @@ export default function DashboardHome() {
         </div>
       </motion.div>
 
+      {/* Reprendre */}
+      {resume && (
+        <motion.a
+          href={resume.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => markOpened(lastOpened!.resourceId, resume.slug)}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="group flex items-center gap-4 rounded-xl p-4 mb-8 transition-all hover:scale-[1.005]"
+          style={{
+            background: `var(--acc-${resume.accent}-soft)`,
+            border: `1px solid var(--acc-${resume.accent}-line)`,
+          }}
+        >
+          <span
+            className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: 'var(--bg-card)' }}
+          >
+            <PlayCircle size={20} aria-hidden="true" style={{ color: `var(--acc-${resume.accent})` }} />
+          </span>
+          <span className="flex-1 min-w-0">
+            <span className="block text-xs font-medium mb-0.5" style={{ color: `var(--acc-${resume.accent})` }}>
+              Reprendre où vous en étiez
+            </span>
+            <span className="block font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+              {resume.title}
+            </span>
+            <span className="block text-xs truncate" style={{ color: 'var(--text-muted)' }}>
+              {resume.levelName} · {resume.category}
+            </span>
+          </span>
+          <ArrowRight
+            size={18}
+            aria-hidden="true"
+            className="flex-shrink-0 group-hover:translate-x-1 transition-transform"
+            style={{ color: `var(--acc-${resume.accent})` }}
+          />
+        </motion.a>
+      )}
+
       {/* Stats */}
       <motion.div
         variants={container}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12"
+        className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10"
       >
         {stats.map(s => (
           <motion.div key={s.label} variants={item}
-            className="card-glow rounded-xl p-4 flex items-center gap-3"
+            className="rounded-xl px-3 py-2.5 flex items-center gap-2.5"
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
           >
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center"
-              style={{ background: 'rgba(232,115,90,0.15)' }}
-            >
-              <s.icon size={18} style={{ color: '#e8735a' }} />
-            </div>
-            <div>
-              <p className="font-bold text-xl font-display" style={{ color: 'var(--text-primary)' }}>{s.value}</p>
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{s.label}</p>
-            </div>
+            <s.icon size={15} aria-hidden="true" style={{ color: 'var(--coral-text)' }} className="flex-shrink-0" />
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{s.value}</span>{' '}
+              {s.label.toLowerCase()}
+            </p>
           </motion.div>
         ))}
       </motion.div>
@@ -132,30 +180,53 @@ export default function DashboardHome() {
           animate="show"
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
         >
-          {levels.map(level => (
-            <motion.div key={level.name} variants={item}>
+          {LEVELS.map(level => (
+            <motion.div key={level.code} variants={item}>
               <Link href={level.href}>
                 <div className="card-glow rounded-xl p-5 h-full cursor-pointer group"
                   style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="px-2.5 py-1 rounded-lg text-xs font-bold font-mono"
-                      style={{ background: `${level.color}18`, color: level.color, border: `1px solid ${level.color}30` }}
+                      style={{ background: `var(--acc-${level.accent}-soft)`, color: `var(--acc-${level.accent})`, border: `1px solid var(--acc-${level.accent}-line)` }}
                     >
                       {level.code}
                     </div>
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{level.count} exercices</span>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      {levelResourceCount(level.slug)} ressources
+                    </span>
                   </div>
-                  <h3 className="font-display font-bold text-lg mb-1 group-hover:text-coral transition-colors"
+                  <h3 className="font-semibold text-lg mb-1 group-hover:text-coral transition-colors"
                     style={{ color: 'var(--text-primary)' }}
                   >
                     {level.name}
                   </h3>
                   <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{level.desc}</p>
-                  <div className="mt-4 flex items-center gap-1 text-xs font-medium"
-                    style={{ color: level.color }}
+
+                  {(() => {
+                    const total = levelResourceCount(level.slug)
+                    const done = doneCountForLevel(level.slug)
+                    const pct = total === 0 ? 0 : Math.round((done / total) * 100)
+                    return (
+                      <div className="mt-4">
+                        <div className="flex items-center justify-between text-xs mb-1.5">
+                          <span style={{ color: 'var(--text-muted)' }}>{done}/{total} terminées</span>
+                          <span className="font-medium" style={{ color: `var(--acc-${level.accent})` }}>{pct}%</span>
+                        </div>
+                        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-secondary)' }}
+                          role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}
+                          aria-label={`Progression ${level.name}`}>
+                          <div className="h-full rounded-full transition-[width] duration-500"
+                            style={{ width: `${pct}%`, background: `var(--acc-${level.accent})` }} />
+                        </div>
+                      </div>
+                    )
+                  })()}
+
+                  <div className="mt-3 flex items-center gap-1 text-xs font-medium"
+                    style={{ color: `var(--acc-${level.accent})` }}
                   >
-                    Explorer <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                    Explorer <ArrowRight size={12} aria-hidden="true" className="group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
               </Link>
@@ -175,19 +246,19 @@ export default function DashboardHome() {
           animate="show"
           className="grid grid-cols-1 sm:grid-cols-2 gap-4"
         >
-          {specialCourses.map(course => (
-            <motion.div key={course.name} variants={item}>
+          {COURSES.map(course => (
+            <motion.div key={course.code} variants={item}>
               <Link href={course.href}>
                 <div className="card-glow rounded-xl p-5 cursor-pointer group flex items-center gap-4"
                   style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
                 >
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: `${course.color}15`, border: `1px solid ${course.color}25` }}
+                    style={{ background: `var(--acc-${course.accent}-soft)`, border: `1px solid var(--acc-${course.accent}-line)` }}
                   >
-                    <course.icon size={22} style={{ color: course.color }} />
+                    {(() => { const Icon = COURSE_ICONS[course.iconName]; return <Icon size={22} aria-hidden="true" style={{ color: `var(--acc-${course.accent})` }} /> })()}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-display font-bold mb-0.5 group-hover:text-coral transition-colors"
+                    <h3 className="font-semibold mb-0.5 group-hover:text-coral transition-colors"
                       style={{ color: 'var(--text-primary)' }}
                     >
                       {course.name}
