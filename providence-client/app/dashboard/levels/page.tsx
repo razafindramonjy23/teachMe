@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, Plane, Briefcase, GraduationCap, Globe } from 'lucide-react'
 import { LEVELS, COURSES, type CourseItem } from '@/lib/catalog'
-import { levelResourceCount } from '@/lib/resources'
+import { levelResourceCount, levelResourceIds } from '@/lib/resources'
 import { useProgress } from '@/lib/progress'
 
 const ICONS: Record<CourseItem['iconName'], typeof Plane> = {
@@ -24,7 +24,7 @@ const item = {
 }
 
 export default function LevelsIndexPage() {
-  const { doneCountForLevel } = useProgress()
+  const { countDone } = useProgress()
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -90,7 +90,7 @@ export default function LevelsIndexPage() {
 
                   {(() => {
                     const total = levelResourceCount(level.slug)
-                    const done = doneCountForLevel(level.slug)
+                    const done = countDone(levelResourceIds(level.slug))
                     const pct = total === 0 ? 0 : Math.round((done / total) * 100)
                     return (
                       <span className="block mt-4">

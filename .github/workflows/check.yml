@@ -1,0 +1,76 @@
+# teachMe — vérifications automatiques
+#
+# 1. À chaque push sur main et à chaque pull request :
+#    types, lint, tests unitaires et contrôle statique du catalogue.
+#    Un échec signale une régression AVANT qu'elle n'atteigne Vercel.
+#
+# 2. Chaque lundi (et à la demande) : test réseau des liens du catalogue.
+#    Détecte les liens morts et les domaines rachetés qui redirigent vers un
+#    autre site — un lien affiché sur 5 niveaux menait à un site de jeux
+#    d'argent avant le nettoyage du 2026-11-15.
+
+name: Vérifications
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1' # lundi 06:00 UTC (09:00 à Antananarivo)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: providence-client
+
+jobs:
+  check:
+    name: Types, lint, tests, catalogue (hors réseau)
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: providence-client/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          # Node ≥ 22.18 exécute les tests TypeScript nativement.
+          # N'affecte pas la version de Node utilisée par Vercel en production.
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: providence-client/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm run check
+
+  catalog-links:
+    name: Liens du catalogue (réseau)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: providence-client/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: providence-client/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      # Échoue si un lien est mort ou redirige vers un autre site.
+      # Les hôtes qui bloquent les robots sont listés dans le script et ignorés.
+      - run: pnpm run catalog:check

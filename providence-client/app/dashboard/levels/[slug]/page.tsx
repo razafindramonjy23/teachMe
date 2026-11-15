@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowLeft, ExternalLink, Check } from 'lucide-react'
-import { levelData, ICON_MAP, resourceId, levelResourceCount } from '@/lib/resources'
+import { levelData, ICON_MAP, resourceId, levelResourceCount, levelResourceIds } from '@/lib/resources'
 import { useProgress } from '@/lib/progress'
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } }
@@ -13,7 +13,7 @@ const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transiti
 export default function LevelPage() {
   const { slug } = useParams<{ slug: string }>()
   const level = levelData[slug]
-  const { entries, markOpened, toggleDone, doneCountForLevel } = useProgress()
+  const { markOpened, toggleDone, isDone, countDone } = useProgress()
 
   if (!level) {
     return (
@@ -29,7 +29,7 @@ export default function LevelPage() {
   }
 
   const total = levelResourceCount(slug)
-  const done = doneCountForLevel(slug)
+  const done = countDone(levelResourceIds(slug))
   const pct = total === 0 ? 0 : Math.round((done / total) * 100)
 
   return (
@@ -117,7 +117,7 @@ export default function LevelPage() {
       <motion.div variants={container} initial="hidden" animate="show" className="flex flex-col gap-8">
         {level.categories.map(cat => {
           const CatIcon = ICON_MAP[cat.label] || cat.icon
-          const catDone = cat.links.filter(l => entries[resourceId(slug, cat.label, l.title)]?.doneAt).length
+          const catDone = countDone(cat.links.map(l => resourceId(l.url)))
 
           return (
             <motion.section key={cat.label} variants={item}>
@@ -144,9 +144,8 @@ export default function LevelPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 {cat.links.map(link => {
-                  const id = resourceId(slug, cat.label, link.title)
-                  const entry = entries[id]
-                  const isDone = Boolean(entry?.doneAt)
+                  const id = resourceId(link.url)
+                  const checked = isDone(id)
 
                   return (
                     <div
@@ -157,9 +156,9 @@ export default function LevelPage() {
                       <button
                         type="button"
                         onClick={() => toggleDone(id, slug)}
-                        aria-pressed={isDone}
+                        aria-pressed={checked}
                         aria-label={
-                          isDone
+                          checked
                             ? `Marquer « ${link.title} » comme non terminée`
                             : `Marquer « ${link.title} » comme terminée`
                         }
@@ -168,12 +167,12 @@ export default function LevelPage() {
                         <span
                           className="w-5 h-5 rounded-md flex items-center justify-center transition-colors"
                           style={
-                            isDone
+                            checked
                               ? { background: `var(--acc-${level.accent})` }
                               : { border: '1.5px solid var(--border)' }
                           }
                         >
-                          {isDone && <Check size={13} strokeWidth={3} style={{ color: 'var(--bg-card)' }} />}
+                          {checked && <Check size={13} strokeWidth={3} style={{ color: 'var(--bg-card)' }} />}
                         </span>
                       </button>
 
@@ -185,8 +184,8 @@ export default function LevelPage() {
                         className="flex-1 min-w-0 flex items-center justify-between gap-2 py-3 pr-4 text-sm"
                       >
                         <span
-                          className={`font-medium truncate transition-colors group-hover:text-coral ${isDone ? 'line-through' : ''}`}
-                          style={{ color: isDone ? 'var(--text-muted)' : 'var(--text-primary)' }}
+                          className={`font-medium truncate transition-colors group-hover:text-coral ${checked ? 'line-through' : ''}`}
+                          style={{ color: checked ? 'var(--text-muted)' : 'var(--text-primary)' }}
                         >
                           {link.title}
                         </span>

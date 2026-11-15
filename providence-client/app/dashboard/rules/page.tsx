@@ -75,7 +75,7 @@ export default function RulesPage() {
           Règles du Self-Access
         </h1>
         <p className="text-lg mb-10" style={{ color: 'var(--text-secondary)' }}>
-          Pour garantir un environnement d'apprentissage agréable et efficace pour tous, veuillez lire et respecter ces règles.
+          Pour garantir un environnement d’apprentissage agréable et efficace pour tous, veuillez lire et respecter ces règles.
         </p>
       </motion.div>
 
@@ -126,7 +126,7 @@ export default function RulesPage() {
               Aucun contenu de votre travail sur les sites externes n&apos;est collecté.
             </p>
             <ul className="text-sm leading-relaxed list-disc pl-5" style={{ color: 'var(--text-secondary)' }}>
-              <li>Vous seul et les encadrants de votre site voyez votre progression.</li>
+              <li>Vous seul et les administrateurs de la plateforme voyez votre progression.</li>
               <li>Les ressources seulement ouvertes et jamais terminées sont effacées après 12 mois.</li>
               <li>Vous pouvez décocher une ressource à tout moment pour retirer son marquage.</li>
             </ul>

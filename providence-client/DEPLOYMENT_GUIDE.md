@@ -85,10 +85,10 @@ La table `users` est créée automatiquement avec :
 - `role` (superuser, admin, user)
 - `createdAt` (TEXT NOT NULL)
 
-Utilisateurs par défaut (seeds) :
-- Email: `superuser@providence.academy` / Password: `super123` (Role: superuser)
-- Email: `admin@providence.academy` / Password: `admin123` (Role: admin)
-- Email: `demo@providence.academy` / Password: `demo123` (Role: user)
+Utilisateurs de démonstration : `superuser@`, `admin@` et `demo@providence.academy`,
+créés par `scripts/seed-demo-users.mjs`. Les mots de passe sont passés par variables
+d'environnement (`SEED_SUPERUSER_PASSWORD`, `SEED_ADMIN_PASSWORD`, `SEED_DEMO_PASSWORD`)
+et ne doivent jamais être écrits dans le dépôt, qui est public.
 
 ## 🚀 Performance sur Vercel
 

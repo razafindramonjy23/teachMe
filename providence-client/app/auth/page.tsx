@@ -8,6 +8,14 @@ import { useAuth, USER_KEY } from '@/lib/auth'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { LogoMark, Wordmark } from '@/components/brand/Logo'
 
+// Le mot de passe démo n'est jamais écrit dans le code (dépôt public) : il vient
+// de NEXT_PUBLIC_DEMO_PASSWORD. Sans lui, le bloc n'est pas affiché.
+const DEMO_EMAIL = 'demo@providence.academy'
+const DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD
+const SHOW_DEMO_ACCOUNT =
+  Boolean(DEMO_PASSWORD) &&
+  (process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_SHOW_DEMO_ACCOUNT === 'true')
+
 function AuthPageInner() {
   const [loginType, setLoginType] = useState<'email' | 'matricule'>('email')
   const [email, setEmail] = useState('')
@@ -109,7 +117,7 @@ function AuthPageInner() {
           <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
             <h1 className="font-display text-5xl font-bold text-cream leading-tight mb-6">
               Maîtrisez<br />
-              <span className="shimmer-text">l'anglais</span><br />
+              <span className="shimmer-text">l’anglais</span><br />
               à votre rythme.
             </h1>
             <p className="text-cream/70 text-lg leading-relaxed max-w-sm">
@@ -304,26 +312,29 @@ function AuthPageInner() {
             </motion.button>
           </form>
 
-          {/* Demo hint */}
+          {/* Compte démo : affiché si NEXT_PUBLIC_DEMO_PASSWORD est défini, en développement
+              ou si NEXT_PUBLIC_SHOW_DEMO_ACCOUNT=true. Masqué en production par défaut :
+              publier un identifiant et son mot de passe sur une page publique revient à
+              donner l'accès à tout le monde. Masquer ne désactive pas le compte. */}
+          {SHOW_DEMO_ACCOUNT && (
           <div className="mt-6 p-4 rounded-xl border" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
             <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Compte démo :</p>
             <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
               <Mail size={13} aria-hidden="true" className="inline-block mr-1 align-[-2px]" />
-              <span className="font-mono">demo@providence.academy</span>
+              <span className="font-mono">{DEMO_EMAIL}</span>
             </p>
             <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
               <KeyRound size={13} aria-hidden="true" className="inline-block mr-1 align-[-2px]" />
-              <span className="font-mono">demo123</span>
+              <span className="font-mono">{DEMO_PASSWORD}</span>
             </p>
           </div>
+          )}
 
-          {/* Registration link for Staff/Parents */}
+          {/* Pas d'inscription publique : les comptes sont créés par un administrateur. */}
           <div className="mt-6 text-center">
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              Personnel ou Parent?{' '}
-              <a href="/register" className="font-medium" style={{ color: '#e8735a' }}>
-                S'inscrire
-              </a>
+              Pas encore de compte ? Rapprochez-vous de votre encadrant : les accès
+              sont créés par l&apos;administration.
             </p>
           </div>
         </motion.div>

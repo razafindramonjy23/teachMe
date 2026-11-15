@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { requireAdmin, RequireAdminError } from '@/lib/supabase/require-admin';
+import {
+  requireAdmin,
+  RequireAdminError,
+  canManageRole,
+  getManagedProfile,
+} from '@/lib/supabase/require-admin';
 
 type PatchUserBody = {
   displayName?: string;
@@ -19,8 +24,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  let callerRole: 'admin' | 'superuser';
   try {
-    await requireAdmin(request);
+    ({ role: callerRole } = await requireAdmin(request));
   } catch (e) {
     if (e instanceof RequireAdminError) {
       return NextResponse.json({ message: e.message }, { status: e.status });
@@ -30,6 +36,27 @@ export async function PATCH(
 
   const { id } = params;
   const body = (await request.json()) as PatchUserBody;
+
+  const target = await getManagedProfile(id);
+  if (!target) {
+    return NextResponse.json({ message: 'Utilisateur introuvable' }, { status: 404 });
+  }
+
+  // Un admin ne modifie pas un super administrateur…
+  if (!canManageRole(callerRole, target.role)) {
+    return NextResponse.json(
+      { message: 'Seul un super administrateur peut modifier un super administrateur' },
+      { status: 403 },
+    );
+  }
+
+  // …ni ne promeut qui que ce soit (lui-même compris) à ce rôle.
+  if (body.role !== undefined && !canManageRole(callerRole, body.role)) {
+    return NextResponse.json(
+      { message: 'Seul un super administrateur peut attribuer le rôle super administrateur' },
+      { status: 403 },
+    );
+  }
 
   if (body.password?.trim() || body.email?.trim()) {
     const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
@@ -77,13 +104,36 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  let callerRole: 'admin' | 'superuser';
+  let callerId: string;
   try {
-    await requireAdmin(request);
+    const auth = await requireAdmin(request);
+    callerRole = auth.role;
+    callerId = auth.caller.id;
   } catch (e) {
     if (e instanceof RequireAdminError) {
       return NextResponse.json({ message: e.message }, { status: e.status });
     }
     throw e;
+  }
+
+  if (params.id === callerId) {
+    return NextResponse.json(
+      { message: 'Vous ne pouvez pas supprimer votre propre compte' },
+      { status: 400 },
+    );
+  }
+
+  const target = await getManagedProfile(params.id);
+  if (!target) {
+    return NextResponse.json({ message: 'Utilisateur introuvable' }, { status: 404 });
+  }
+
+  if (!canManageRole(callerRole, target.role)) {
+    return NextResponse.json(
+      { message: 'Seul un super administrateur peut supprimer un super administrateur' },
+      { status: 403 },
+    );
   }
 
   const { error } = await supabaseAdmin.auth.admin.deleteUser(params.id);
