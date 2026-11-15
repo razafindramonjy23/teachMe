@@ -1,11 +1,15 @@
 'use client'
 
+import { useCallback, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { ArrowLeft, ExternalLink, Check } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Check, Bookmark, BookOpen } from 'lucide-react'
 import { levelData, ICON_MAP, resourceId, levelResourceCount, levelResourceIds } from '@/lib/resources'
 import { useProgress } from '@/lib/progress'
+import { useAuth } from '@/lib/auth'
+import { useParcours } from '@/lib/use-parcours'
+import { Celebration, type CelebrationEvent } from '@/components/parcours/Celebration'
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } }
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } }
@@ -14,6 +18,11 @@ export default function LevelPage() {
   const { slug } = useParams<{ slug: string }>()
   const level = levelData[slug]
   const { markOpened, toggleDone, isDone, countDone } = useProgress()
+  const { user } = useAuth()
+  const parcoursMode = user?.homeMode === 'parcours'
+  const { stats } = useParcours()
+  const [event, setEvent] = useState<CelebrationEvent | null>(null)
+  const clearEvent = useCallback(() => setEvent(null), [])
 
   if (!level) {
     return (
@@ -32,6 +41,31 @@ export default function LevelPage() {
   const done = countDone(levelResourceIds(slug))
   const pct = total === 0 ? 0 : Math.round((done / total) * 100)
 
+  // Coche + célébration (mode parcours uniquement). Les valeurs de `stats`
+  // sont celles d'avant la coche : on en déduit ce que la coche déclenche.
+  const handleToggle = (id: string) => {
+    const becomingDone = !isDone(id)
+    toggleDone(id, slug)
+    if (!parcoursMode || !becomingDone) return
+    const key = Date.now()
+    const todayAfter = stats.todayCount + 1
+    if (done + 1 === total) {
+      setEvent({ kind: 'level', name: level.name, code: level.code, key })
+    } else if (todayAfter === stats.goal) {
+      setEvent({ kind: 'goal', streak: stats.todayCount === 0 ? stats.streak + 1 : stats.streak, key })
+    } else {
+      const left = stats.goal - todayAfter
+      setEvent({
+        kind: 'page',
+        key,
+        detail:
+          left > 0
+            ? `Encore ${left} ressource${left > 1 ? 's' : ''} pour l’objectif du jour.`
+            : 'Objectif du jour déjà atteint.',
+      })
+    }
+  }
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       {/* Back */}
@@ -45,7 +79,21 @@ export default function LevelPage() {
 
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex flex-wrap items-center gap-3 mb-3">
+          {parcoursMode && (
+            <span className="order-last ml-auto flex gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold"
+                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}>
+                <Bookmark size={15} aria-hidden="true" style={{ color: 'var(--coral-deep)', fill: 'var(--coral)' }} />
+                {stats.streak}<span className="sr-only"> jours d’affilée</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold"
+                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}>
+                <BookOpen size={15} aria-hidden="true" />
+                {stats.pages}<span className="sr-only"> pages tournées</span>
+              </span>
+            </span>
+          )}
           <span
             className="px-3 py-1 rounded-lg text-sm font-bold font-mono"
             style={{
@@ -155,25 +203,29 @@ export default function LevelPage() {
                     >
                       <button
                         type="button"
-                        onClick={() => toggleDone(id, slug)}
+                        onClick={() => handleToggle(id)}
                         aria-pressed={checked}
                         aria-label={
                           checked
                             ? `Marquer « ${link.title} » comme non terminée`
                             : `Marquer « ${link.title} » comme terminée`
                         }
-                        className="tap-target flex-shrink-0 rounded-l-xl"
+                        className={parcoursMode ? 'check-chunky m-1.5' : 'tap-target flex-shrink-0 rounded-l-xl'}
                       >
-                        <span
-                          className="w-5 h-5 rounded-md flex items-center justify-center transition-colors"
-                          style={
-                            checked
-                              ? { background: `var(--acc-${level.accent})` }
-                              : { border: '1.5px solid var(--border)' }
-                          }
-                        >
-                          {checked && <Check size={13} strokeWidth={3} style={{ color: 'var(--bg-card)' }} />}
-                        </span>
+                        {parcoursMode ? (
+                          checked && <Check size={20} strokeWidth={3} aria-hidden="true" style={{ color: 'var(--navy)' }} />
+                        ) : (
+                          <span
+                            className="w-5 h-5 rounded-md flex items-center justify-center transition-colors"
+                            style={
+                              checked
+                                ? { background: `var(--acc-${level.accent})` }
+                                : { border: '1.5px solid var(--border)' }
+                            }
+                          >
+                            {checked && <Check size={13} strokeWidth={3} style={{ color: 'var(--bg-card)' }} />}
+                          </span>
+                        )}
                       </button>
 
                       <a
@@ -211,6 +263,8 @@ export default function LevelPage() {
           Ressources sélectionnées par teachMe Madagascar
         </p>
       </div>
+
+      <Celebration event={event} onDone={clearEvent} />
     </div>
   )
 }

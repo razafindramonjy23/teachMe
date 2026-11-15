@@ -273,3 +273,64 @@ body {
   white-space: nowrap;
   border-width: 0;
 }
+
+/* ===========================================================
+   Parcours gamifié
+   =========================================================== */
+
+/* Bouton « en relief » : corail, rebord terracotta, s'enfonce au clic.
+   Navy sur corail = 4,77:1 (AA), dans les deux thèmes. */
+.btn-chunky {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0 1.25rem;
+  border: 0;
+  border-bottom: 4px solid var(--coral-deep);
+  border-radius: 14px;
+  background: var(--coral);
+  color: var(--navy);
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.08s ease, border-bottom-width 0.08s ease, background-color 0.15s ease;
+}
+.btn-chunky:hover { background: #eb8670; color: var(--navy); }
+.btn-chunky:active { transform: translateY(2px); border-bottom-width: 2px; }
+
+/* Variante neutre (case non cochée, actions secondaires) */
+.btn-chunky-ghost {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 2px solid var(--border);
+  border-bottom-width: 4px;
+}
+.btn-chunky-ghost:hover { background: var(--bg-secondary); color: var(--text-primary); }
+
+/* Case « terminé » en relief */
+.check-chunky {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.08s ease, border-bottom-width 0.08s ease, background-color 0.15s ease;
+}
+.check-chunky[aria-pressed='true'] {
+  background: var(--coral);
+  border: 2px solid var(--coral-deep);
+  border-bottom-width: 4px;
+}
+.check-chunky[aria-pressed='false'] {
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-bottom-width: 4px;
+}
+.check-chunky:active { transform: translateY(2px); border-bottom-width: 2px; }
