@@ -15,7 +15,7 @@ const CHOICES: {
     mode: 'parcours',
     title: 'Parcours guidé',
     text: 'Un chemin du niveau A1 au C1, avec une étape recommandée à chaque fois.',
-    points: ['Objectif : 2 ressources par jour', 'Une série de jours à entretenir', 'Des tampons à collectionner'],
+    points: ['Objectif : 2 ressources par jour', 'Une série à entretenir — les week-ends ne la cassent pas', 'Des tampons à collectionner'],
     Icon: MapIcon,
   },
   {

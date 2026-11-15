@@ -97,7 +97,7 @@ lib/
 
 Règles de calcul (`lib/gamification.ts`, testées dans `tests/gamification.test.ts`) :
 - les jours sont ceux de Madagascar (`Indian/Antananarivo`) ;
-- une série compte les jours consécutifs avec au moins une ressource terminée ; elle tient tant que la veille compte ;
+- une série compte les jours d'activité consécutifs (au moins une ressource terminée) ; elle ne casse qu'après un **jour de semaine** entier sans rien — les week-ends sont neutres : y travailler compte, ne pas y travailler ne casse rien ;
 - les dates de coche sont fixées par la base (migration 0004) : impossible d'antidater une coche.
 
 ## ✅ Qualité et vérifications

@@ -8,6 +8,11 @@
  * Les « jours » sont ceux de Madagascar (UTC+3, sans heure d'été). Calculés en
  * UTC, une ressource terminée à 1 h du matin compterait pour la veille et la
  * série casserait sans raison.
+ *
+ * Les week-ends sont neutres : une ressource terminée un samedi ou un dimanche
+ * compte dans la série, mais ne rien faire le week-end ne la casse pas. Le labo
+ * fonctionne en semaine ; sans cette règle, un apprenant assidu du lundi au
+ * vendredi perdrait sa série chaque lundi.
  */
 
 export const MADAGASCAR_TZ = 'Indian/Antananarivo'
@@ -34,6 +39,20 @@ export function shiftDay(day: string, delta: number): string {
   return d.toISOString().slice(0, 10)
 }
 
+/** Samedi ou dimanche (jour calendaire « AAAA-MM-JJ »). */
+export function isWeekend(day: string): boolean {
+  const weekday = new Date(`${day}T00:00:00Z`).getUTCDay()
+  return weekday === 0 || weekday === 6
+}
+
+/** Vrai si tous les jours strictement entre `a` et `b` (a < b) sont des week-ends. */
+function onlyWeekendsBetween(a: string, b: string): boolean {
+  for (let d = shiftDay(a, 1); d < b; d = shiftDay(d, 1)) {
+    if (!isWeekend(d)) return false
+  }
+  return true
+}
+
 export type Stats = {
   /** Ressources terminées (au catalogue). */
   doneCount: number
@@ -43,32 +62,46 @@ export type Stats = {
   todayCount: number
   goal: number
   goalReached: boolean
-  /** Jours consécutifs avec au moins une ressource terminée. */
+  /** Jours d'activité consécutifs (les week-ends sans activité ne cassent rien). */
   streak: number
-  /** La série tient grâce à hier, mais rien n'est encore terminé aujourd'hui. */
+  /** Jour de semaine sans rien de terminé encore : la série casse ce soir. */
   streakAtRisk: boolean
   bestStreak: number
 }
 
 /**
  * Statistiques d'un apprenant à partir des dates `done_at` de ses ressources
- * terminées. Une série reste en cours tant que la veille compte : on ne la
- * perd qu'après une journée entière sans rien terminer.
+ * terminées. La série compte les jours d'activité ; elle ne casse qu'après un
+ * jour de semaine entier sans rien terminer.
  */
 export function computeStats(doneAt: string[], now: Date = new Date()): Stats {
   const days = new Set(doneAt.map(d => localDay(d)))
   const today = localDay(now)
-  const yesterday = shiftDay(today, -1)
 
+  // Point de départ : aujourd'hui s'il compte, sinon le dernier jour d'activité,
+  // à condition qu'il n'en soit séparé que par des week-ends.
+  let start: string | null = null
+  if (days.has(today)) {
+    start = today
+  } else {
+    let d = shiftDay(today, -1)
+    while (isWeekend(d) && !days.has(d)) d = shiftDay(d, -1)
+    if (days.has(d)) start = d
+  }
+
+  // On remonte : un jour d'activité compte, un week-end vide est sauté,
+  // un jour de semaine vide arrête la série.
   let streak = 0
-  const start = days.has(today) ? today : days.has(yesterday) ? yesterday : null
-  for (let d = start; d !== null && days.has(d); d = shiftDay(d, -1)) streak++
+  for (let d = start, guard = 0; d !== null && guard < 10_000; d = shiftDay(d, -1), guard++) {
+    if (days.has(d)) streak++
+    else if (!isWeekend(d)) break
+  }
 
   let bestStreak = 0
   let run = 0
   let previous: string | null = null
   for (const d of Array.from(days).sort()) {
-    run = previous !== null && shiftDay(previous, 1) === d ? run + 1 : 1
+    run = previous !== null && onlyWeekendsBetween(previous, d) ? run + 1 : 1
     bestStreak = Math.max(bestStreak, run)
     previous = d
   }
@@ -81,7 +114,7 @@ export function computeStats(doneAt: string[], now: Date = new Date()): Stats {
     goal: DAILY_GOAL,
     goalReached: todayCount >= DAILY_GOAL,
     streak,
-    streakAtRisk: streak > 0 && !days.has(today),
+    streakAtRisk: streak > 0 && !days.has(today) && !isWeekend(today),
     bestStreak,
   }
 }
@@ -157,8 +190,8 @@ export function computeStamps(input: {
       kicker: 'série',
       earned,
       condition: earned
-        ? `Obtenu en terminant au moins une ressource par jour, ${days} jours d’affilée.`
-        : `Terminez au moins une ressource par jour, ${days} jours d’affilée. Meilleure série : ${bestStreak} jour${bestStreak > 1 ? 's' : ''}.`,
+        ? `Obtenu avec une série de ${days} jours d’activité (les week-ends ne cassent pas la série).`
+        : `Atteignez une série de ${days} jours : au moins une ressource par jour, les week-ends ne la cassent pas. Meilleure série : ${bestStreak} jour${bestStreak > 1 ? 's' : ''}.`,
     })
   }
   stamps.push(...levels.filter(l => l.kind === 'parcours').map(levelStamp))
