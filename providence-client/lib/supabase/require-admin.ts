@@ -1,5 +1,6 @@
 import 'server-only';
 import { supabaseAdmin } from './admin';
+import type { UserRole } from '@/lib/roles';
 
 export class RequireAdminError extends Error {
   constructor(public status: number, message: string) {
@@ -36,4 +37,19 @@ export async function requireAdmin(request: Request) {
   }
 
   return { caller: userData.user, role: profile.role as 'admin' | 'superuser' };
+}
+
+export type { UserRole as ManagedRole } from '@/lib/roles';
+export { canManageRole } from '@/lib/roles';
+
+/** Lit le rôle d'un compte géré. `null` si le profil n'existe pas. */
+export async function getManagedProfile(id: string) {
+  const { data, error } = await supabaseAdmin
+    .from('profiles')
+    .select('id, role')
+    .eq('id', id)
+    .single();
+
+  if (error || !data) return null;
+  return { id: data.id as string, role: data.role as UserRole };
 }

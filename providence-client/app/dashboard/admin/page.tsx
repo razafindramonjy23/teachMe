@@ -7,6 +7,7 @@ import {
   X, Save, AlertCircle, CheckCircle, Search, ChevronDown, KeyRound, Mail
 } from 'lucide-react'
 import { useAuth, UserRole } from '@/lib/auth'
+import { canManageRole as canManageRoleRule } from '@/lib/roles'
 import type { StoredUser } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 
@@ -193,11 +194,8 @@ export default function AdminPage() {
 
   if (!user || user.role === 'user') return null
 
-  const canManageRole = (targetRole: UserRole) => {
-    if (user.role === 'superuser') return true
-    if (user.role === 'admin' && targetRole !== 'superuser') return true
-    return false
-  }
+  const canManageRole = (targetRole: UserRole) =>
+    user.role !== 'user' && canManageRoleRule(user.role, targetRole)
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -385,7 +383,7 @@ export default function AdminPage() {
                 {modal === 'create' && (
                   <div>
                     <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>
-                      Type d'utilisateur
+                      Type d’utilisateur
                     </label>
                     <div className="flex gap-2">
                       {(['student', 'staff'] as const).map(type => (
