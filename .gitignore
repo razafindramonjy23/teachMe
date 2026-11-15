@@ -4,3 +4,5 @@ coverage/
 .DS_Store
 .env
 .env.*
+# Les fichiers d'exemple (valeurs fictives) documentent les variables : on les versionne.
+!.env*.example

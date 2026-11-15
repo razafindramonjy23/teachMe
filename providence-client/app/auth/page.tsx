@@ -4,9 +4,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock, User, AlertCircle, ChevronRight, KeyRound } from 'lucide-react'
-import { useAuth, USER_KEY } from '@/lib/auth'
+import { useAuth } from '@/lib/auth'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { LogoMark, Wordmark } from '@/components/brand/Logo'
+import { isValidMatricule, normalizeMatricule, MATRICULE_EXAMPLE } from '@/lib/utils/matricule'
 
 // Le mot de passe démo n'est jamais écrit dans le code (dépôt public) : il vient
 // de NEXT_PUBLIC_DEMO_PASSWORD. Sans lui, le bloc n'est pas affiché.
@@ -41,42 +42,30 @@ function AuthPageInner() {
           setLoading(false)
           return
         }
-        ok = await login(email, password)
-        if (!ok) setError('Email ou mot de passe incorrect.')
+        const res = await login(email, password)
+        ok = res.ok
+        if (!res.ok) setError(res.reason === 'disabled' ? 'Ce compte est désactivé. Rapprochez-vous de votre encadrant.' : 'Email ou mot de passe incorrect.')
       } else {
         if (!matricule || !password) {
           setError('Veuillez remplir tous les champs')
           setLoading(false)
           return
         }
-        // Validation basique du format matricule
-        if (!/^PA-\d{3}-STU-\d{4}-\d{4}$/.test(matricule)) {
-          setError('Format matricule invalide (PA-010-STU-2605-0001)')
+        // Formats reconnus : actuel (TM-000123) et ancien (PA-010-STU-…)
+        if (!isValidMatricule(matricule)) {
+          setError(`Format de matricule non reconnu (exemple : ${MATRICULE_EXAMPLE})`)
           setLoading(false)
           return
         }
-        ok = await loginWithMatricule(matricule, password)
-        if (!ok) setError('Matricule ou mot de passe incorrect.')
+        const res = await loginWithMatricule(normalizeMatricule(matricule), password)
+        ok = res.ok
+        if (!res.ok) setError(res.reason === 'disabled' ? 'Ce compte est désactivé. Rapprochez-vous de votre encadrant.' : 'Matricule ou mot de passe incorrect.')
       }
 
       if (ok) {
-        const raw = localStorage.getItem(USER_KEY)
-        if (raw) {
-          const sessionUser = JSON.parse(raw) as {
-            userType?: string
-            profileComplete?: number
-          }
-          if (
-            sessionUser.userType === 'student' &&
-            !sessionUser.profileComplete
-          ) {
-            router.push('/dashboard/onboarding')
-          } else {
-            router.push('/dashboard')
-          }
-        } else {
-          router.push('/dashboard')
-        }
+        // Plus d'étape d'onboarding : un compte est créé complet par
+        // l'administration (nom, niveau, organisation facultative).
+        router.push('/dashboard')
       }
     } finally {
       setLoading(false)
@@ -228,7 +217,7 @@ function AuthPageInner() {
                       value={matricule}
                       onChange={e => setMatricule(e.target.value.toUpperCase())}
                       autoComplete="username"
-                      placeholder="PA-010-STU-2603-045"
+                      placeholder={MATRICULE_EXAMPLE}
                       className="w-full pl-9 pr-4 py-3 rounded-xl text-sm outline-none transition-all font-mono"
                       style={{
                         background: 'var(--bg-secondary)',
@@ -241,7 +230,7 @@ function AuthPageInner() {
               </div>
               {loginType === 'matricule' && (
                 <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                  Format: PA-XXX-STU-MMYY-###
+                  Votre matricule figure sur la fiche remise à l’inscription (ex. {MATRICULE_EXAMPLE}).
                 </p>
               )}
             </div>

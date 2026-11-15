@@ -30,7 +30,7 @@ const rules = [
     accent: 'coral',
     items: [
       'La durée maximale par session est de 90 minutes.',
-      'Libérez le poste si d\'autres étudiants attendent.',
+      'Libérez le poste si d\'autres apprenants attendent.',
       'Les sessions ne sont pas réservables à l\'avance.',
     ],
   },

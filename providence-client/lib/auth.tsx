@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  useCallback,
   createContext,
   useContext,
   useState,
@@ -8,6 +9,7 @@ import {
   ReactNode,
 } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import { fetchPaged } from '@/lib/supabase/fetch-paged';
 
 export type UserRole = 'superuser' | 'admin' | 'user';
 export type UserType = 'student' | 'staff';
@@ -20,13 +22,18 @@ export interface User {
   role: UserRole;
   userType?: UserType;
   matricule?: string;
-  location?: string;
-  courseLevel?: string;
   profileComplete?: number;
   /** Mode d'accueil : null = pas encore choisi (écran de choix). */
   homeMode?: HomeMode | null;
+  /** Date de désactivation (migration 0005) ; null = compte actif. */
+  deactivatedAt?: string | null;
+  /** Organisation de rattachement (migration 0005) ; null = aucune. */
+  organisationId?: string | null;
   createdAt: string;
 }
+
+/** Résultat d'une tentative de connexion, avec la raison d'un échec. */
+export type LoginResult = { ok: true } | { ok: false; reason: 'disabled' | 'invalid' };
 
 export type HomeMode = 'parcours' | 'libre';
 
@@ -47,11 +54,11 @@ type ProfileRow = {
   user_type: UserType;
   level: string;
   matricule: string | null;
-  location: string | null;
-  course_level: string | null;
   profile_complete: number;
   /** Absente tant que la migration 0004 n'est pas appliquée. */
   home_mode?: HomeMode | null;
+  deactivated_at?: string | null;
+  organisation_id?: string | null;
   created_at: string;
 };
 
@@ -64,10 +71,10 @@ function mapProfileToUser(p: ProfileRow): User {
     role: p.role,
     userType: p.user_type,
     matricule: p.matricule ?? undefined,
-    location: p.location ?? undefined,
-    courseLevel: p.course_level ?? undefined,
     profileComplete: p.profile_complete,
     homeMode: p.home_mode ?? null,
+    deactivatedAt: p.deactivated_at ?? null,
+    organisationId: p.organisation_id ?? null,
     createdAt: p.created_at,
   };
 }
@@ -97,7 +104,8 @@ async function readError(res: Response): Promise<string> {
   return text || `HTTP ${res.status}`;
 }
 
-async function authFetch(path: string, init: RequestInit = {}) {
+/** Requête vers les routes /api avec le jeton de session de l'utilisateur. */
+export async function authFetch(path: string, init: RequestInit = {}) {
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -115,13 +123,8 @@ interface AuthContextType {
     email: string | undefined,
     password: string,
     matricule?: string,
-  ) => Promise<boolean>;
-  loginWithMatricule: (matricule: string, password: string) => Promise<boolean>;
-  completeStudentProfile: (
-    userId: string,
-    location: string,
-    courseLevel: string,
-  ) => Promise<boolean>;
+  ) => Promise<LoginResult>;
+  loginWithMatricule: (matricule: string, password: string) => Promise<LoginResult>;
   logout: () => void;
   /** Enregistre le mode d'accueil dans le profil. */
   setHomeMode: (mode: HomeMode) => Promise<void>;
@@ -133,12 +136,14 @@ interface AuthContextType {
     password: string,
     role: UserRole,
     level: string,
+    /** Organisation de rattachement (facultative ; imposée par l'API pour un admin rattaché). */
+    organisationId?: string | null,
   ) => Promise<{ ok: boolean; error?: string }>;
   createStudent: (
     name: string,
     password: string,
-    location: string,
-    courseLevel: string,
+    organisationId: string | null,
+    level?: string,
   ) => Promise<{ ok: boolean; matricule?: string; error?: string }>;
   updateUser: (
     id: string,
@@ -162,7 +167,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } = await supabase.auth.getSession();
       if (session?.user) {
         const profile = await fetchProfile(session.user.id);
-        if (active && profile) {
+        if (active && profile?.deactivated_at) {
+          // Compte désactivé pendant la session : on coupe tout de suite.
+          await supabase.auth.signOut();
+          localStorage.removeItem(USER_KEY);
+        } else if (active && profile) {
           const appUser = mapProfileToUser(profile);
           setUser(appUser);
           persistUser(appUser);
@@ -194,7 +203,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string | undefined,
     password: string,
     matricule?: string,
-  ): Promise<boolean> => {
+  ): Promise<LoginResult> => {
     setIsLoading(true);
     try {
       let resolvedEmail = email?.trim();
@@ -213,19 +222,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           password,
         });
       if (signInError || !signInData.user) {
+        // Compte banni par un admin (désactivation) : Supabase le signale.
+        if (signInError?.code === 'user_banned' || /banned/i.test(signInError?.message ?? '')) {
+          return { ok: false, reason: 'disabled' };
+        }
         throw new Error(signInError?.message ?? 'Identifiants incorrects');
       }
 
       const profile = await fetchProfile(signInData.user.id);
       if (!profile) throw new Error('Profil introuvable');
+      if (profile.deactivated_at) {
+        // Double sécurité si le bannissement n'a pas été posé côté Auth
+        await supabase.auth.signOut();
+        return { ok: false, reason: 'disabled' };
+      }
 
       const appUser = mapProfileToUser(profile);
       setUser(appUser);
       persistUser(appUser);
-      return true;
+      return { ok: true };
     } catch (e) {
       console.error('Login error:', e);
-      return false;
+      return { ok: false, reason: 'invalid' };
     } finally {
       setIsLoading(false);
     }
@@ -234,7 +252,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithMatricule = async (
     matricule: string,
     password: string,
-  ): Promise<boolean> => {
+  ): Promise<LoginResult> => {
     return login(undefined, password, matricule);
   };
 
@@ -244,34 +262,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Authentication → Sign In / Providers → Email → « Allow new users to sign up » OFF.
   // Sans ce réglage, n'importe qui peut appeler supabase.auth.signUp() avec la
   // clé anon, qui est publique par conception.
-
-  const completeStudentProfile = async (
-    userId: string,
-    location: string,
-    courseLevel: string,
-  ): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({
-          location,
-          course_level: courseLevel,
-          profile_complete: 100,
-        })
-        .eq('id', userId)
-        .select()
-        .single();
-      if (error || !data) throw new Error(error?.message ?? 'Erreur');
-
-      const appUser = mapProfileToUser(data as ProfileRow);
-      setUser(appUser);
-      persistUser(appUser);
-      return true;
-    } catch (e) {
-      console.error('Complete profile error:', e);
-      return false;
-    }
-  };
 
   const setHomeMode = async (mode: HomeMode): Promise<void> => {
     if (!user) return;
@@ -294,19 +284,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(USER_KEY);
   };
 
-  const getAllUsers = async (): Promise<StoredUser[]> => {
+  // Stable entre les rendus : les pages peuvent la déclarer en dépendance d'un
+  // effet sans déclencher de rechargement à chaque rendu du contexte.
+  const getAllUsers = useCallback(async (): Promise<StoredUser[]> => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (error || !data) throw new Error(error?.message ?? 'Erreur');
-      return (data as ProfileRow[]).map((p) => mapProfileToUser(p) as StoredUser);
+      // Paginé : Supabase plafonne chaque réponse (1 000 lignes par défaut) et
+      // tronquerait la liste sans prévenir. Tri sur une clé unique (id) en
+      // second, pour des pages stables.
+      const rows = await fetchPaged<ProfileRow>((from, to) =>
+        supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .order('id')
+          .range(from, to),
+      );
+      return rows.map((p) => mapProfileToUser(p) as StoredUser);
     } catch (e) {
       console.error('Get users error:', e);
       return [];
     }
-  };
+  }, []);
 
   const createUser = async (
     name: string,
@@ -314,6 +312,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     role: UserRole,
     level: string,
+    organisationId?: string | null,
   ): Promise<{ ok: boolean; error?: string }> => {
     try {
       const res = await authFetch('/api/users/manage', {
@@ -325,6 +324,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role,
           userType: 'staff',
           level,
+          organisationId: organisationId || null,
         }),
       });
       if (!res.ok) throw new Error(await readError(res));
@@ -340,8 +340,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const createStudent = async (
     name: string,
     password: string,
-    location: string,
-    courseLevel: string,
+    organisationId: string | null,
+    level = 'Beginner',
   ): Promise<{ ok: boolean; matricule?: string; error?: string }> => {
     try {
       const res = await authFetch('/api/users/manage', {
@@ -351,9 +351,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           password,
           userType: 'student',
           role: 'user',
-          level: 'Beginner',
-          location,
-          courseLevel,
+          level,
+          organisationId,
         }),
       });
       if (!res.ok) throw new Error(await readError(res));
@@ -378,10 +377,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (updates.role != null) body.role = updates.role;
       if (updates.level != null) body.level = updates.level;
       if (updates.userType != null) body.userType = updates.userType;
-      if (updates.location !== undefined) body.location = updates.location;
-      if (updates.courseLevel !== undefined) {
-        body.courseLevel = updates.courseLevel;
-      }
+      if (updates.organisationId !== undefined) body.organisationId = updates.organisationId;
       if (updates.matricule !== undefined) body.matricule = updates.matricule;
       if (updates.profileComplete !== undefined) {
         body.profileComplete = updates.profileComplete;
@@ -426,7 +422,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         login,
         loginWithMatricule,
-        completeStudentProfile,
         logout,
         setHomeMode,
         isLoading,
