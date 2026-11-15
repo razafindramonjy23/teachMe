@@ -110,19 +110,6 @@ interface AuthContextType {
     matricule?: string,
   ) => Promise<boolean>;
   loginWithMatricule: (matricule: string, password: string) => Promise<boolean>;
-  register: (
-    name: string,
-    email: string,
-    password: string,
-    level?: string,
-  ) => Promise<boolean>;
-  registerStudent: (
-    name: string,
-    email: string | null,
-    password: string,
-    location: string,
-    courseLevel: string,
-  ) => Promise<{ ok: boolean; matricule?: string; error?: string }>;
   completeStudentProfile: (
     userId: string,
     location: string,
@@ -242,86 +229,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return login(undefined, password, matricule);
   };
 
-  const register = async (
-    name: string,
-    email: string,
-    password: string,
-    level = 'Beginner',
-  ): Promise<boolean> => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { displayName: name, userType: 'staff', level },
-        },
-      });
-      if (error || !data.user) {
-        throw new Error(error?.message ?? "Erreur lors de l'inscription");
-      }
-
-      const profile = await fetchProfile(data.user.id);
-      if (!profile) throw new Error('Profil introuvable');
-
-      const appUser = mapProfileToUser(profile);
-      setUser(appUser);
-      persistUser(appUser);
-      return true;
-    } catch (e) {
-      console.error('Register error:', e);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const registerStudent = async (
-    name: string,
-    email: string | null,
-    password: string,
-    location: string,
-    courseLevel: string,
-  ): Promise<{ ok: boolean; matricule?: string; error?: string }> => {
-    setIsLoading(true);
-    try {
-      const { data: matriculeData, error: matriculeError } =
-        await supabase.rpc('next_matricule', { p_location: location });
-      if (matriculeError || !matriculeData) {
-        throw new Error('Erreur génération du matricule');
-      }
-      const matricule = matriculeData as string;
-      const finalEmail = email?.trim() || `${matricule}@student.local`;
-
-      const { data, error } = await supabase.auth.signUp({
-        email: finalEmail,
-        password,
-        options: {
-          data: {
-            displayName: name,
-            userType: 'student',
-            location,
-            courseLevel,
-            matricule,
-          },
-        },
-      });
-      if (error || !data.user) {
-        throw new Error(error?.message ?? "Erreur lors de l'inscription");
-      }
-
-      // À la différence de register(), un compte étudiant créé ici ne
-      // connecte pas automatiquement le navigateur courant.
-      await supabase.auth.signOut();
-
-      return { ok: true, matricule };
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Erreur';
-      return { ok: false, error: msg };
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Inscription publique supprimée : les comptes sont créés exclusivement par
+  // un administrateur via /dashboard/admin → POST /api/users/manage (clé
+  // service_role). Le verrou qui fait foi est côté Supabase :
+  // Authentication → Sign In / Providers → Email → « Allow new users to sign up » OFF.
+  // Sans ce réglage, n'importe qui peut appeler supabase.auth.signUp() avec la
+  // clé anon, qui est publique par conception.
 
   const completeStudentProfile = async (
     userId: string,
@@ -490,8 +403,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         login,
         loginWithMatricule,
-        register,
-        registerStudent,
         completeStudentProfile,
         logout,
         isLoading,
