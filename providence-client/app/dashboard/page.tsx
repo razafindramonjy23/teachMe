@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { BookOpen, Target, CheckCircle2, ArrowRight, Globe, Briefcase, Plane, GraduationCap, PlayCircle } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
 import { LEVELS, COURSES, type CourseItem } from '@/lib/catalog'
-import { levelData, levelResourceCount, totalResourceCount, resourceId } from '@/lib/resources'
+import { levelResourceCount, levelResourceIds, totalResourceCount, allResourceIds, findResource } from '@/lib/resources'
 import { useProgress } from '@/lib/progress'
 
 const COURSE_ICONS: Record<CourseItem['iconName'], typeof Plane> = {
@@ -15,19 +15,6 @@ const COURSE_ICONS: Record<CourseItem['iconName'], typeof Plane> = {
   globe: Globe,
 }
 
-/** Retrouve le titre et le niveau d'une ressource à partir de son identifiant. */
-function findResource(id: string) {
-  for (const [slug, level] of Object.entries(levelData)) {
-    for (const cat of level.categories) {
-      for (const link of cat.links) {
-        if (resourceId(slug, cat.label, link.title) === id) {
-          return { slug, levelName: level.name, accent: level.accent, title: link.title, url: link.url, category: cat.label }
-        }
-      }
-    }
-  }
-  return null
-}
 
 const container = {
   hidden: { opacity: 0 },
@@ -40,7 +27,8 @@ const item = {
 
 export default function DashboardHome() {
   const { user } = useAuth()
-  const { totalDone, doneCountForLevel, lastOpened, markOpened } = useProgress()
+  const { countDone, lastOpened, markOpened } = useProgress()
+  const totalDone = countDone(allResourceIds())
 
   const totalResources = totalResourceCount()
   const resume = lastOpened ? findResource(lastOpened.resourceId) : null
@@ -104,7 +92,7 @@ export default function DashboardHome() {
           href={resume.url}
           target="_blank"
           rel="noopener noreferrer"
-          onClick={() => markOpened(lastOpened!.resourceId, resume.slug)}
+          onClick={() => markOpened(resume.id, resume.levelSlug)}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
@@ -205,7 +193,7 @@ export default function DashboardHome() {
 
                   {(() => {
                     const total = levelResourceCount(level.slug)
-                    const done = doneCountForLevel(level.slug)
+                    const done = countDone(levelResourceIds(level.slug))
                     const pct = total === 0 ? 0 : Math.round((done / total) * 100)
                     return (
                       <div className="mt-4">

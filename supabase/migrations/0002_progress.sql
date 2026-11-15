@@ -33,6 +33,13 @@ alter table public.resource_progress enable row level security;
 -- L'apprenant lit et écrit uniquement ses propres lignes.
 -- Les admins et superusers lisent tout, mais n'écrivent jamais à la place d'un
 -- apprenant : la progression reste déclarée par la personne concernée.
+--
+-- Portée volontairement globale : un admin voit les apprenants de TOUS les
+-- sites, pas seulement du sien. Pour restreindre par site, remplacer la
+-- condition admin ci-dessous par une comparaison de `profiles.location` entre
+-- l'admin et l'apprenant — à ne faire qu'une fois `location` rendue obligatoire
+-- pour le personnel, sinon les admins sans site perdraient tout accès.
+-- Le texte affiché aux apprenants (page Règlement) doit rester cohérent.
 
 drop policy if exists "progress_select_own_or_admin" on public.resource_progress;
 create policy "progress_select_own_or_admin"

@@ -12,6 +12,10 @@
  * est restauré — on ne laisse jamais une coche mentir à l'apprenant.
  *
  * Le RLS de Supabase garantit qu'un apprenant ne lit et n'écrit que ses lignes.
+ *
+ * `resource_id` identifie la page (son URL), pas son emplacement : cocher une
+ * ressource listée à plusieurs niveaux la coche partout. `level_slug` mémorise
+ * seulement le niveau depuis lequel elle a été ouverte (utile pour « Reprendre »).
  */
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
@@ -34,10 +38,15 @@ type ProgressContextValue = {
   markOpened: (resourceId: string, levelSlug: string) => void
   /** Coche / décoche « terminé ». */
   toggleDone: (resourceId: string, levelSlug: string) => void
-  /** Progression d'un niveau : nombre de ressources terminées. */
-  doneCountForLevel: (levelSlug: string) => number
-  /** Nombre total de ressources terminées, tous niveaux confondus. */
-  totalDone: number
+  /** La ressource est-elle marquée « terminé » ? */
+  isDone: (resourceId: string) => boolean
+  /**
+   * Combien de ces identifiants sont terminés. On passe les identifiants du
+   * catalogue (ex. `levelResourceIds('beginner')`) plutôt qu'un niveau : une
+   * même page peut figurer dans plusieurs niveaux et doit compter dans chacun,
+   * et une ligne orpheline (ressource retirée du catalogue) ne compte nulle part.
+   */
+  countDone: (resourceIds: string[]) => number
   /** Dernière ressource ouverte et non terminée, pour le bloc « Reprendre ». */
   lastOpened: ProgressEntry | null
 }
@@ -155,7 +164,6 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<ProgressContextValue>(() => {
     const list = Object.values(entries)
-    const done = list.filter(e => e.doneAt)
     const resumable = list
       .filter(e => e.openedAt && !e.doneAt)
       .sort((a, b) => (b.openedAt ?? '').localeCompare(a.openedAt ?? ''))
@@ -165,9 +173,9 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       markOpened,
       toggleDone,
-      doneCountForLevel: (levelSlug: string) =>
-        done.filter(e => e.levelSlug === levelSlug).length,
-      totalDone: done.length,
+      isDone: (resourceId: string) => Boolean(entries[resourceId]?.doneAt),
+      countDone: (resourceIds: string[]) =>
+        resourceIds.reduce((n, id) => (entries[id]?.doneAt ? n + 1 : n), 0),
       lastOpened: resumable[0] ?? null,
     }
   }, [entries, isLoading, markOpened, toggleDone])

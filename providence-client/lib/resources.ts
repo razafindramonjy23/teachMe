@@ -1,13 +1,16 @@
 /**
  * Catalogue des ressources par niveau.
  *
- * Chaque ressource reçoit un identifiant stable dérivé de
- * (slug du niveau, catégorie, titre) via `resourceId()`. Cet identifiant est la
- * clé utilisée dans la table `resource_progress` côté Supabase.
+ * L'identité d'une ressource est son **URL** (voir `resourceId()`) : une même
+ * page listée à plusieurs niveaux est une seule ressource, avec une seule case
+ * « terminé ». L'identifiant est la clé de `resource_progress.resource_id`.
  *
- * ⚠ Renommer le titre d'une ressource change son identifiant et détache la
- * progression déjà enregistrée. Pour un simple ajustement de libellé, préférer
- * conserver le titre d'origine.
+ * L'URL est normalisée avant d'être hachée : protocole, `www.` et `/` final
+ * sont ignorés. On peut donc passer un lien de http:// à https:// sans perdre
+ * la progression. Changer le chemin ou l'hôte, en revanche, crée une nouvelle
+ * ressource. Le fragment (#…) est conservé : il distingue des sections
+ * (isabelperez.com/grammar.htm#Grammar ≠ #Vocabulary) et des pages d'applis
+ * monopage (soundcomparisons.com/#/en/…).
  */
 
 import { BookOpen, Headphones, PenTool, Video, Globe, Mic } from 'lucide-react'
@@ -43,9 +46,9 @@ export const levelData: Record<string, LevelEntry> = {
         icon: BookOpen,
         links: [
           { title: 'ESL Gold – Low Beginner Grammar', url: 'https://eslgold.com/improve-grammar/resources-by-level/low-beginner/' },
-          { title: 'ESL Lounge – Level 1a', url: 'http://www.esl-lounge.com/level1a.php' },
+          { title: 'ESL Lounge – Level 1a', url: 'https://www.esl-lounge.com/level1a.php' },
           { title: 'GrammarBank – Beginner Lessons', url: 'https://www.grammarbank.com/beginners-esl-lessons.html' },
-          { title: 'ESL Games World', url: 'http://eslgamesworld.com/members/games/levels/easy/index.html' },
+          { title: 'ESL Games World', url: 'https://eslgamesworld.com/members/games/levels/easy/index.html' },
           { title: 'British Council – Basic Grammar', url: 'https://learnenglish.britishcouncil.org/basic-grammar' },
           { title: 'Oxford Practice Grammar – Basic', url: 'https://elt.oup.com/student/practicegrammar/basic/?cc=global&selLanguage=en' },
         ],
@@ -54,11 +57,11 @@ export const levelData: Record<string, LevelEntry> = {
         label: 'Vocabulaire',
         icon: PenTool,
         links: [
-          { title: 'ESL Lounge – Vocabulary A1', url: 'http://www.esl-lounge.com/level1avocab.php' },
+          { title: 'ESL Lounge – Vocabulary A1', url: 'https://www.esl-lounge.com/level1avocab.php' },
           { title: 'GrammarBank – Vocabulary', url: 'https://www.grammarbank.com/english-vocabulary-exercises.html' },
           { title: 'British Council – Basic Vocabulary', url: 'https://learnenglish.britishcouncil.org/basic-vocabulary' },
-          { title: 'Learning Chocolate', url: 'http://www.learningchocolate.com/' },
-          { title: 'Language Guide', url: 'http://www.languageguide.org/english/' },
+          { title: 'Learning Chocolate', url: 'https://www.learningchocolate.com/' },
+          { title: 'Language Guide', url: 'https://www.languageguide.org/english/' },
           { title: 'A4ESL Vocabulary', url: 'http://a4esl.org/a/v.html' },
         ],
       },
@@ -76,18 +79,17 @@ export const levelData: Record<string, LevelEntry> = {
         icon: Mic,
         links: [
           { title: 'British Council – Speaking A1', url: 'https://learnenglish.britishcouncil.org/skills/speaking/beginner-a1' },
-          { title: 'ESL Gold – Speaking', url: 'http://www.eslgold.com/speaking/low_beginning' },
-          { title: 'Daily ESL', url: 'http://www.dailyesl.com/' },
-          { title: 'ESL Fast – Robot', url: 'http://www.eslfast.com/robot/' },
+          { title: 'ESL Gold – Speaking', url: 'https://www.eslgold.com/speaking/low_beginning' },
+          { title: 'Daily ESL', url: 'https://www.dailyesl.com/' },
+          { title: 'ESL Fast – Robot', url: 'https://www.eslfast.com/robot/' },
         ],
       },
       {
         label: 'Lecture',
         icon: BookOpen,
         links: [
-          { title: 'ESL Lounge – Reading A1', url: 'http://www.esl-lounge.com/level1a-reading.php' },
+          { title: 'ESL Lounge – Reading A1', url: 'https://www.esl-lounge.com/level1a-reading.php' },
           { title: 'British Council – Reading A1', url: 'https://learnenglish.britishcouncil.org/reading/beginner-a1-reading' },
-          { title: 'AJ 3000 – Graded Readers', url: 'http://aj3000.com/wp/free-graded-readers/' },
         ],
       },
     ],
@@ -100,7 +102,7 @@ export const levelData: Record<string, LevelEntry> = {
         label: 'Anglais général',
         icon: Globe,
         links: [
-          { title: 'LEO Network', url: 'http://www.learn-english-online.org/' },
+          { title: 'LEO Network', url: 'https://www.learn-english-online.org/' },
           { title: 'BBC Learning English – Courses', url: 'https://www.bbc.co.uk/learningenglish/english/courses' },
         ],
       },
@@ -108,20 +110,20 @@ export const levelData: Record<string, LevelEntry> = {
         label: 'Grammaire',
         icon: BookOpen,
         links: [
-          { title: 'ESL Lounge – Level 1b Grammar', url: 'http://www.esl-lounge.com/level1bstructure.php' },
-          { title: 'ESL Gold – High Beginning', url: 'http://www.eslgold.com/grammar/high_beginning/' },
+          { title: 'ESL Lounge – Level 1b Grammar', url: 'https://www.esl-lounge.com/level1bstructure.php' },
+          { title: 'ESL Gold – High Beginning', url: 'https://www.eslgold.com/grammar/high_beginning/' },
           { title: 'SpeakSpeak – Elementary', url: 'http://speakspeak.com/english-grammar-exercises/elementary' },
           { title: 'English Club – Grammar Quizzes', url: 'http://www.englishclub.com/esl-quizzes/grammar-quizzes.htm' },
-          { title: 'English Media Lab – Elementary', url: 'http://www.englishmedialab.com/elementaryquizzes.html' },
+          { title: 'English Media Lab – Elementary', url: 'https://www.englishmedialab.com/elementaryquizzes.html' },
         ],
       },
       {
         label: 'Vocabulaire',
         icon: PenTool,
         links: [
-          { title: 'ESL Lounge – Vocabulary A2', url: 'http://www.esl-lounge.com/level1bvocab.php' },
+          { title: 'ESL Lounge – Vocabulary A2', url: 'https://www.esl-lounge.com/level1bvocab.php' },
           { title: 'English Club – Vocabulary Quizzes', url: 'http://www.englishclub.com/esl-quizzes/vocabulary.htm' },
-          { title: 'Picture Dictionary', url: 'http://www.pdictionary.com/' },
+          { title: 'Picture Dictionary', url: 'https://www.pdictionary.com/' },
         ],
       },
       {
@@ -136,16 +138,15 @@ export const levelData: Record<string, LevelEntry> = {
         icon: Mic,
         links: [
           { title: 'British Council – Speaking A1', url: 'https://learnenglish.britishcouncil.org/skills/speaking/beginner-a1' },
-          { title: 'ESL Gold – Speaking High Beginning', url: 'http://www.eslgold.com/speaking/high_beginning.html' },
+          { title: 'ESL Gold – Speaking High Beginning', url: 'https://www.eslgold.com/speaking/high_beginning.html' },
         ],
       },
       {
         label: 'Lecture',
         icon: BookOpen,
         links: [
-          { title: 'ESL Lounge – Reading A2', url: 'http://www.esl-lounge.com/level1breadwrite.php' },
+          { title: 'ESL Lounge – Reading A2', url: 'https://www.esl-lounge.com/level1breadwrite.php' },
           { title: 'British Council – Reading A1', url: 'https://learnenglish.britishcouncil.org/reading/beginner-a1-reading' },
-          { title: 'AJ 3000 – Graded Readers', url: 'http://aj3000.com/wp/free-graded-readers/' },
         ],
       },
     ],
@@ -192,7 +193,6 @@ export const levelData: Record<string, LevelEntry> = {
         icon: BookOpen,
         links: [
           { title: 'British Council – Reading B1', url: 'https://learnenglish.britishcouncil.org/reading/intermediate-b1-reading' },
-          { title: 'AJ 3000 – Graded Readers', url: 'http://aj3000.com/wp/free-graded-readers/' },
         ],
       },
     ],
@@ -216,7 +216,7 @@ export const levelData: Record<string, LevelEntry> = {
           { title: 'Isabel Pérez – Grammar', url: 'http://www.isabelperez.com/grammar.htm#Grammar' },
           { title: 'A4ESL – Grammar', url: 'http://a4esl.org/q/h/grammar.html' },
           { title: 'Using English – Quizzes', url: 'http://www.usingenglish.com/quizzes/' },
-          { title: 'ESL Gold – High Intermediate', url: 'http://www.eslgold.com/grammar/high_intermediate' },
+          { title: 'ESL Gold – High Intermediate', url: 'https://www.eslgold.com/grammar/high_intermediate' },
           { title: 'Oxford Practice Grammar – Intermediate', url: 'https://elt.oup.com/student/practicegrammar/int/?cc=global&selLanguage=en' },
         ],
       },
@@ -250,7 +250,7 @@ export const levelData: Record<string, LevelEntry> = {
         icon: Mic,
         links: [
           { title: 'British Council – Speaking B1', url: 'https://learnenglish.britishcouncil.org/skills/speaking/intermediate-b1' },
-          { title: 'ESL Gold – Speaking High Intermediate', url: 'http://www.eslgold.com/speaking/high_intermediate' },
+          { title: 'ESL Gold – Speaking High Intermediate', url: 'https://www.eslgold.com/speaking/high_intermediate' },
         ],
       },
       {
@@ -258,7 +258,6 @@ export const levelData: Record<string, LevelEntry> = {
         icon: BookOpen,
         links: [
           { title: 'British Council – Reading B1', url: 'https://learnenglish.britishcouncil.org/reading/intermediate-b1-reading' },
-          { title: 'AJ 3000 – Graded Readers', url: 'http://aj3000.com/wp/free-graded-readers/' },
         ],
       },
     ],
@@ -274,7 +273,6 @@ export const levelData: Record<string, LevelEntry> = {
           { title: 'Englisch-Hilfen – Grammar', url: 'https://www.englisch-hilfen.de/en/inhalt_grammar.htm' },
           { title: 'Isabel Pérez – Grammar', url: 'http://www.isabelperez.com/grammar.htm' },
           { title: 'English Club – Grammar Quizzes', url: 'http://www.englishclub.com/esl-quizzes/grammar-quizzes.htm' },
-          { title: 'English Zone', url: 'http://www.english-zone.com/index.php?ID=1' },
         ],
       },
       {
@@ -291,16 +289,15 @@ export const levelData: Record<string, LevelEntry> = {
         icon: Headphones,
         links: [
           { title: 'British Council – Listening C1', url: 'https://learnenglish.britishcouncil.org/skills/listening/advanced-c1' },
-          { title: 'ESL Bits', url: 'http://esl-bits.net/' },
-          { title: 'ELLLO', url: 'http://www.elllo.org/english/home.htm' },
+          { title: 'ESL Bits', url: 'https://esl-bits.eu/home.html' },
+          { title: 'ELLLO', url: 'https://elllo.org/' },
         ],
       },
       {
         label: 'Expression orale',
         icon: Mic,
         links: [
-          { title: 'Daily ESL', url: 'http://www.dailyesl.com/' },
-          { title: 'English Zone – Speaking', url: 'http://www.english-zone.com/index.php?ID=40' },
+          { title: 'Daily ESL', url: 'https://www.dailyesl.com/' },
         ],
       },
       {
@@ -308,7 +305,6 @@ export const levelData: Record<string, LevelEntry> = {
         icon: BookOpen,
         links: [
           { title: 'British Council – Reading C1', url: 'https://learnenglish.britishcouncil.org/reading/advanced-c1-reading' },
-          { title: 'AJ 3000 – Graded Readers', url: 'http://aj3000.com/wp/free-graded-readers/' },
         ],
       },
     ],
@@ -324,7 +320,6 @@ export const levelData: Record<string, LevelEntry> = {
           { title: 'Englisch-Hilfen – Grammar', url: 'https://www.englisch-hilfen.de/en/inhalt_grammar.htm' },
           { title: 'Isabel Pérez – Grammar', url: 'http://www.isabelperez.com/grammar.htm' },
           { title: 'English Club – Grammar Quizzes', url: 'http://www.englishclub.com/esl-quizzes/grammar-quizzes.htm' },
-          { title: 'English Zone', url: 'http://www.english-zone.com/index.php?ID=1' },
           { title: 'Oxford Practice Grammar – Advanced', url: 'https://elt.oup.com/student/practicegrammar/advanced/?cc=global&selLanguage=en' },
         ],
       },
@@ -334,9 +329,9 @@ export const levelData: Record<string, LevelEntry> = {
         links: [
           { title: 'Englisch-Hilfen – Words', url: 'https://www.englisch-hilfen.de/en/words_inhalt.htm' },
           { title: 'A4ESL – Vocabulary', url: 'http://a4esl.org/q/h/vocabulary.html' },
-          { title: 'ESL Gold – Advanced Vocabulary', url: 'http://www.eslgold.com/vocabulary/advanced' },
+          { title: 'ESL Gold – Advanced Vocabulary', url: 'https://www.eslgold.com/vocabulary/advanced' },
           { title: 'English Club – Vocabulary', url: 'http://www.englishclub.com/vocabulary/index.htm' },
-          { title: 'ESL Gold – Academic Quiz', url: 'http://eslgold.com/vocabulary/academic_quiz/' },
+          { title: 'ESL Gold – Academic Quiz', url: 'https://eslgold.com/vocabulary/academic_quiz/' },
         ],
       },
       {
@@ -344,18 +339,16 @@ export const levelData: Record<string, LevelEntry> = {
         icon: Headphones,
         links: [
           { title: 'British Council – Listening C1', url: 'https://learnenglish.britishcouncil.org/skills/listening/advanced-c1' },
-          { title: 'ESL Bits', url: 'http://esl-bits.net/' },
-          { title: 'ELLLO', url: 'http://www.elllo.org/english/home.htm' },
-          { title: 'Dictations Online', url: 'http://www.dictationsonline.com/' },
+          { title: 'ESL Bits', url: 'https://esl-bits.eu/home.html' },
+          { title: 'ELLLO', url: 'https://elllo.org/' },
         ],
       },
       {
         label: 'Expression orale',
         icon: Mic,
         links: [
-          { title: 'Daily ESL', url: 'http://www.dailyesl.com/' },
-          { title: 'English Zone – Speaking', url: 'http://www.english-zone.com/index.php?ID=40' },
-          { title: 'ESL Gold – Advanced Speaking', url: 'http://www.eslgold.com/speaking/advanced' },
+          { title: 'Daily ESL', url: 'https://www.dailyesl.com/' },
+          { title: 'ESL Gold – Advanced Speaking', url: 'https://www.eslgold.com/speaking/advanced' },
         ],
       },
       {
@@ -363,8 +356,8 @@ export const levelData: Record<string, LevelEntry> = {
         icon: BookOpen,
         links: [
           { title: 'British Council – Reading C1', url: 'https://learnenglish.britishcouncil.org/reading/advanced-c1-reading' },
-          { title: 'ESL Gold – Advanced Reading', url: 'http://www.eslgold.com/reading/advanced' },
-          { title: 'Project Gutenberg', url: 'http://www.gutenberg.org/' },
+          { title: 'ESL Gold – Advanced Reading', url: 'https://www.eslgold.com/reading/advanced' },
+          { title: 'Project Gutenberg', url: 'https://www.gutenberg.org/' },
         ],
       },
       {
@@ -395,8 +388,7 @@ export const levelData: Record<string, LevelEntry> = {
           { title: 'ICAO – Site officiel', url: 'https://www.icao.int/Pages/default.aspx' },
           { title: 'ICAO English Test Sample Questions', url: 'https://aviationenglish.com/icao-english-test-questions/sample-questions-for-the-icao-english-test-personal-information' },
           { title: 'Revise Before Flight', url: 'https://www.revisebeforeflight.com/' },
-          { title: 'Aviation English Vocabulary', url: 'http://english4aviation.pbworks.com/w/page/24013737/Vocabulary%20Resource' },
-          { title: 'Tyrone Bishop Aviation', url: 'https://www.tyronebishop.com/' },
+          { title: 'Aviation English Vocabulary', url: 'https://english4aviation.pbworks.com/w/page/24013737/Vocabulary%20Resource' },
         ],
       },
       {
@@ -413,23 +405,21 @@ export const levelData: Record<string, LevelEntry> = {
         icon: Video,
         links: [
           { title: 'Airplane Geeks Podcast', url: 'http://www.airplanegeeks.com/' },
-          { title: 'Wayne Farley Aviation', url: 'http://waynefarleyaviation.com/' },
           { title: 'The Finer Points – Podcasts', url: 'https://www.learnthefinerpoints.com/podcast/?Podcasts=all' },
-          { title: 'Aviation English Blog', url: 'http://aviationenglishasia.wordpress.com/2010/07/04/free-aviation-english-for-pilots-and-controllers/' },
+          { title: 'Aviation English Blog', url: 'https://aviationenglishasia.wordpress.com/2010/07/04/free-aviation-english-for-pilots-and-controllers/' },
         ],
       },
       {
         label: 'Ressources techniques',
         icon: BookOpen,
         links: [
-          { title: 'Landings', url: 'http://www.landings.com/' },
-          { title: 'See How It Flies', url: 'http://www.av8n.com/how/' },
-          { title: 'Pilot Friend', url: 'http://www.pilotfriend.com/' },
-          { title: 'Skybrary Aviation Safety', url: 'http://www.skybrary.aero/' },
+          { title: 'See How It Flies', url: 'https://www.av8n.com/how/' },
+          { title: 'Pilot Friend', url: 'https://www.pilotfriend.com/' },
+          { title: 'Skybrary Aviation Safety', url: 'https://www.skybrary.aero/' },
           { title: 'Live ATC', url: 'http://liveatc.net/' },
-          { title: 'Airport Technology', url: 'http://www.airport-technology.com' },
-          { title: 'ATC Network', url: 'http://www.atc-network.com' },
-          { title: 'Aviation Week', url: 'http://aviationweek.com/' },
+          { title: 'Airport Technology', url: 'https://www.airport-technology.com' },
+          { title: 'ATC Network', url: 'https://www.atc-network.com' },
+          { title: 'Aviation Week', url: 'https://aviationweek.com/' },
         ],
       },
     ],
@@ -453,7 +443,7 @@ export const levelData: Record<string, LevelEntry> = {
         icon: Headphones,
         links: [
           { title: 'British Council – Listening B2', url: 'https://learnenglish.britishcouncil.org/skills/listening/upper-intermediate-b2' },
-          { title: 'ELLLO Business', url: 'http://www.elllo.org/english/home.htm' },
+          { title: 'ELLLO Business', url: 'https://elllo.org/' },
         ],
       },
       {
@@ -475,7 +465,7 @@ export const levelData: Record<string, LevelEntry> = {
         icon: Globe,
         links: [
           { title: 'Cambridge English – C1 Advanced', url: 'https://www.cambridgeenglish.org/exams-and-tests/advanced/' },
-          { title: 'British Council – CAE', url: 'https://www.britishcouncil.org/exam/cambridge-c1' },
+          { title: 'Cambridge English – C1 Advanced', url: 'https://www.cambridgeenglish.org/exams-and-tests/qualifications/advanced/' },
           { title: 'Exam English – CAE Practice', url: 'https://www.examenglish.com/CAE/index.php' },
           { title: 'Test English – CAE', url: 'https://test-english.com/exams/cambridge-advanced/' },
         ],
@@ -493,7 +483,6 @@ export const levelData: Record<string, LevelEntry> = {
         icon: Headphones,
         links: [
           { title: 'British Council – Listening C1', url: 'https://learnenglish.britishcouncil.org/skills/listening/advanced-c1' },
-          { title: 'Dictations Online', url: 'http://www.dictationsonline.com/' },
         ],
       },
       {
@@ -502,7 +491,7 @@ export const levelData: Record<string, LevelEntry> = {
         links: [
           { title: 'British Council – Reading C1', url: 'https://learnenglish.britishcouncil.org/reading/advanced-c1-reading' },
           { title: 'British Council – Writing C1', url: 'https://learnenglish.britishcouncil.org/writing/advanced-c1-writing' },
-          { title: 'Project Gutenberg', url: 'http://www.gutenberg.org/' },
+          { title: 'Project Gutenberg', url: 'https://www.gutenberg.org/' },
         ],
       },
     ],
@@ -516,7 +505,7 @@ export const levelData: Record<string, LevelEntry> = {
         icon: Globe,
         links: [
           { title: 'IELTS.org – Site officiel', url: 'https://www.ielts.org' },
-          { title: 'IELTS Essentials – Préparation', url: 'https://www.ieltsessentials.com/global/prepare' },
+          { title: 'IDP IELTS – Préparation', url: 'https://ielts.idp.com/prepare' },
           { title: 'British Council – Free Practice Tests', url: 'https://takeielts.britishcouncil.org/take-ielts/prepare/free-ielts-practice-tests' },
           { title: 'IDP IELTS – Prepare', url: 'https://idpielts.me/prepare/' },
         ],
@@ -525,10 +514,10 @@ export const levelData: Record<string, LevelEntry> = {
         label: 'Tests pratiques',
         icon: BookOpen,
         links: [
-          { title: 'Exam English – IELTS Tests', url: 'http://www.examenglish.com/IELTS/index.php' },
+          { title: 'Exam English – IELTS Tests', url: 'https://www.examenglish.com/IELTS/index.php' },
           { title: 'Test English – IELTS', url: 'https://test-english.com/exams/ielts/' },
           { title: 'IELTS Online Tests', url: 'https://ieltsonlinetests.com/ielts-exam-library' },
-          { title: 'IELTS Exam.net – Practice', url: 'https://www.ielts-exam.net/practice_tests/' },
+          { title: 'IELTS Exam – Practice Tests', url: 'https://www.ielts-writing.info/EXAM/practice_tests/' },
           { title: 'Mini IELTS', url: 'https://mini-ielts.com/' },
           { title: 'Exam English IELTS', url: 'https://www.examenglish.com/IELTS/index.html' },
           { title: 'IELTS Blog – Online Tests', url: 'https://www.ielts-blog.com/ielts-online-practice-tests/' },
@@ -538,10 +527,10 @@ export const levelData: Record<string, LevelEntry> = {
         label: 'Guides & Préparation',
         icon: PenTool,
         links: [
-          { title: 'IELTS Buddy', url: 'http://www.ieltsbuddy.com/' },
+          { title: 'IELTS Buddy', url: 'https://www.ieltsbuddy.com/' },
           { title: 'IELTS Up – Listening Practice', url: 'https://ielts-up.com/listening/ielts-listening-practice.html' },
           { title: 'Daily Dictation – IELTS Listening', url: 'https://dailydictation.com/exercises/ielts-listening' },
-          { title: 'English Online – Exams', url: 'http://www.english-online.org.uk/exam.htm' },
+          { title: 'English Online – Exams', url: 'https://www.english-online.org.uk/exam.htm' },
         ],
       },
     ],
@@ -563,37 +552,104 @@ export const ICON_MAP: Record<string, typeof BookOpen> = {
   'Sites officiels': Globe,
 }
 
-/** Slug ASCII stable, insensible à la casse et aux accents. */
-function slugify(value: string): string {
+/**
+ * Forme canonique d'une URL pour l'identité d'une ressource.
+ * Ignore : protocole, casse de l'hôte, préfixe `www.`, `/` final avant `?`/`#`.
+ */
+export function normalizeUrl(url: string): string {
+  const trimmed = url.trim()
+  const match = trimmed.match(/^[a-z][a-z0-9+.-]*:\/\/([^/?#]*)(.*)$/i)
+  const host = (match ? match[1] : '').toLowerCase().replace(/^www\./, '')
+  let rest = match ? match[2] : trimmed
+  // retire le « / » final du chemin, sans toucher à la requête ni au fragment
+  rest = rest.replace(/\/+(?=([?#]|$))/, '')
+  return host + rest
+}
+
+/** Hachage FNV-1a 32 bits, déterministe dans le navigateur comme dans Node. */
+function fnv1a(value: string): string {
+  let hash = 0x811c9dc5
+  for (let i = 0; i < value.length; i++) {
+    hash ^= value.charCodeAt(i)
+    hash = Math.imul(hash, 0x01000193)
+  }
+  return (hash >>> 0).toString(36).padStart(7, '0')
+}
+
+/** Slug ASCII, lisible par un humain qui parcourt la table. */
+function slugify(value: string, max: number): string {
   return value
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-    .slice(0, 80)
+    .slice(0, max)
+    .replace(/-+$/, '')
 }
 
-/** Identifiant stable d'une ressource, clé de `resource_progress.resource_id`. */
-export function resourceId(levelSlug: string, category: string, title: string): string {
-  return `${levelSlug}--${slugify(category)}--${slugify(title)}`
+/**
+ * Identifiant stable d'une ressource : `<slug lisible>~<hash>`.
+ * Le slug aide à lire la base ; le hash de l'URL normalisée garantit
+ * l'unicité même quand le slug est tronqué. Toujours ≤ 100 caractères.
+ */
+export function resourceId(url: string): string {
+  const canonical = normalizeUrl(url)
+  return `${slugify(canonical, 90)}~${fnv1a(canonical)}`
 }
 
-/** Nombre de ressources d'un niveau. */
+/** Nombre d'emplacements de ressources d'un niveau (une même page peut figurer dans plusieurs niveaux). */
 export function levelResourceCount(levelSlug: string): number {
   const level = levelData[levelSlug]
   if (!level) return 0
   return level.categories.reduce((total, cat) => total + cat.links.length, 0)
 }
 
-/** Nombre total de ressources du catalogue. */
-export function totalResourceCount(): number {
-  return Object.keys(levelData).reduce((total, slug) => total + levelResourceCount(slug), 0)
-}
-
-/** Tous les identifiants d'un niveau, dans l'ordre d'affichage. */
+/** Identifiants d'un niveau, dans l'ordre d'affichage. */
 export function levelResourceIds(levelSlug: string): string[] {
   const level = levelData[levelSlug]
   if (!level) return []
-  return level.categories.flatMap(cat => cat.links.map(l => resourceId(levelSlug, cat.label, l.title)))
+  return level.categories.flatMap(cat => cat.links.map(l => resourceId(l.url)))
+}
+
+/** Identifiants distincts de tout le catalogue. */
+export function allResourceIds(): string[] {
+  return Array.from(new Set(Object.keys(levelData).flatMap(levelResourceIds)))
+}
+
+/** Nombre de ressources distinctes du catalogue (une page listée à 5 niveaux compte une fois). */
+export function totalResourceCount(): number {
+  return allResourceIds().length
+}
+
+export type ResourceLocation = {
+  id: string
+  levelSlug: string
+  levelName: string
+  accent: string
+  category: string
+  title: string
+  url: string
+}
+
+/** Premier emplacement d'une ressource dans le catalogue, ou `null` si elle a été retirée. */
+export function findResource(id: string): ResourceLocation | null {
+  for (const [levelSlug, level] of Object.entries(levelData)) {
+    for (const cat of level.categories) {
+      for (const link of cat.links) {
+        if (resourceId(link.url) === id) {
+          return {
+            id,
+            levelSlug,
+            levelName: level.name,
+            accent: level.accent,
+            category: cat.label,
+            title: link.title,
+            url: link.url,
+          }
+        }
+      }
+    }
+  }
+  return null
 }
