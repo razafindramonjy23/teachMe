@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 140" width="520" height="140" role="img" aria-label="teachMe — Learn English Online">
+  <g transform="translate(0,10)">
+    <path d="M15 6h90a11 11 0 0 1 11 11v64a11 11 0 0 1-11 11H52L26 114V92h-11A11 11 0 0 1 4 81V17A11 11 0 0 1 15 6Z" fill="#1b2a4a"/>
+    <path d="M17 31c10-6 28-6 40 0v44c-12-6-30-6-40 0V31Z" fill="#f7f5f0"/>
+    <path d="M103 31c-10-6-28-6-40 0v44c12-6 30-6 40 0V31Z" fill="#e8735a"/>
+    <rect x="24" y="40" width="26" height="5" rx="2.5" fill="#1b2a4a"/>
+    <rect x="24" y="50" width="26" height="5" rx="2.5" fill="#1b2a4a"/>
+    <rect x="24" y="60" width="18" height="5" rx="2.5" fill="#1b2a4a"/>
+  </g>
+  <text x="142" y="78" font-family="'Playfair Display', Georgia, serif" font-size="62" font-weight="700" letter-spacing="-1">
+    <tspan fill="#1b2a4a">teach</tspan><tspan fill="#c2553e">Me</tspan>
+  </text>
+  <text x="146" y="108" font-family="'DM Sans', Helvetica, Arial, sans-serif" font-size="17" letter-spacing="4.2" fill="#4a5468">LEARN ENGLISH ONLINE</text>
+</svg>
