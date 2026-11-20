@@ -1,18 +1,26 @@
 'use client'
 
+/**
+ * Page d'un niveau : en-tête avec pochette et avancement, puis les ressources
+ * par catégorie. La logique de coche et de célébration est inchangée ; seule
+ * la mise en forme suit la nouvelle coquille.
+ */
+
 import { useCallback, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { ArrowLeft, ExternalLink, Check, Bookmark, BookOpen } from 'lucide-react'
+import { Check, ExternalLink } from 'lucide-react'
 import { levelData, ICON_MAP, resourceId, levelResourceCount, levelResourceIds } from '@/lib/resources'
 import { useProgress } from '@/lib/progress'
 import { useAuth } from '@/lib/auth'
 import { useParcours } from '@/lib/use-parcours'
+import { LEVELS, COURSES, type Accent } from '@/lib/catalog'
+import { Surface } from '@/components/ui/Card'
+import { LevelCover } from '@/components/ui/LevelCover'
+import { ProgressRing } from '@/components/ui/ProgressRing'
+import { stagger, staggerItem } from '@/components/ui/PageTransition'
 import { Celebration, type CelebrationEvent } from '@/components/parcours/Celebration'
-
-const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } }
-const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } }
 
 export default function LevelPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -30,8 +38,8 @@ export default function LevelPage() {
         <h1 className="font-display text-3xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
           Niveau introuvable
         </h1>
-        <Link href="/dashboard" className="text-sm" style={{ color: 'var(--coral-text)' }}>
-          ← Retour au tableau de bord
+        <Link href="/dashboard/levels" className="text-sm" style={{ color: 'var(--coral-text)' }}>
+          ← Retour au catalogue
         </Link>
       </div>
     )
@@ -40,6 +48,8 @@ export default function LevelPage() {
   const total = levelResourceCount(slug)
   const done = countDone(levelResourceIds(slug))
   const pct = total === 0 ? 0 : Math.round((done / total) * 100)
+  const accent = level.accent as Accent
+  const code = [...LEVELS, ...COURSES].find(l => l.slug === slug)?.code ?? level.code
 
   // Coche + célébration (mode parcours uniquement). Les valeurs de `stats`
   // sont celles d'avant la coche : on en déduit ce que la coche déclenche.
@@ -67,88 +77,78 @@ export default function LevelPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      {/* Back */}
-      <Link
-        href="/dashboard/levels"
-        className="inline-flex items-center gap-1.5 text-sm mb-8 hover:text-coral transition-colors"
-        style={{ color: 'var(--text-muted)' }}
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-10">
+      {/* En-tête */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="flex flex-col sm:flex-row items-start sm:items-end gap-5 mb-8"
       >
-        <ArrowLeft size={14} aria-hidden="true" /> Tous les niveaux
-      </Link>
+        <span
+          className="w-28 sm:w-36 flex-shrink-0 rounded-[var(--radius-lg)] overflow-hidden"
+          style={{ boxShadow: 'var(--shadow-lift)' }}
+        >
+          <LevelCover slug={slug} accent={accent} code={code} />
+        </span>
 
-      {/* Header */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
-        <div className="flex flex-wrap items-center gap-3 mb-3">
-          {parcoursMode && (
-            <span className="order-last ml-auto flex gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold"
-                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}>
-                <Bookmark size={15} aria-hidden="true" style={{ color: 'var(--coral-deep)', fill: 'var(--coral)' }} />
-                {stats.streak}<span className="sr-only"> jours d’affilée</span>
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold"
-                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}>
-                <BookOpen size={15} aria-hidden="true" />
-                {stats.pages}<span className="sr-only"> pages tournées</span>
-              </span>
-            </span>
-          )}
+        <div className="flex-1 min-w-0">
           <span
-            className="px-3 py-1 rounded-lg text-sm font-bold font-mono"
+            className="inline-block px-2.5 py-1 rounded-lg text-xs font-bold font-mono mb-2"
             style={{
-              background: `var(--acc-${level.accent}-soft)`,
-              color: `var(--acc-${level.accent})`,
-              border: `1px solid var(--acc-${level.accent}-line)`,
+              background: `var(--acc-${accent}-soft)`,
+              color: `var(--acc-${accent})`,
+              border: `1px solid var(--acc-${accent}-line)`,
             }}
           >
-            {level.code}
+            {code}
           </span>
-        </div>
-        <h1 className="font-display text-4xl font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
-          {level.name}
-        </h1>
-        <p className="text-lg max-w-2xl mb-6" style={{ color: 'var(--text-secondary)' }}>
-          {level.desc}
-        </p>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+            {level.name}
+          </h1>
+          <p className="text-base max-w-2xl mb-4" style={{ color: 'var(--text-secondary)' }}>
+            {level.desc}
+          </p>
 
-        {/* Progression du niveau */}
-        {total > 0 && (
-          <div className="max-w-md">
-            <div className="flex items-baseline justify-between mb-2">
-              <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                {done} sur {total} terminées
-              </span>
-              <span className="text-sm font-semibold" style={{ color: `var(--acc-${level.accent})` }}>
-                {pct}%
-              </span>
-            </div>
-            <div
-              className="h-2 rounded-full overflow-hidden"
-              style={{ background: 'var(--bg-secondary)' }}
-              role="progressbar"
-              aria-valuenow={pct}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-label={`Progression du niveau ${level.name}`}
-            >
-              <motion.div
-                className="h-full rounded-full"
-                style={{ background: `var(--acc-${level.accent})` }}
-                initial={{ width: 0 }}
-                animate={{ width: `${pct}%` }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
+          {total > 0 && (
+            <div className="flex items-center gap-4 max-w-md">
+              <ProgressRing
+                value={done}
+                max={total}
+                size={48}
+                thickness={6}
+                color={`var(--acc-${accent})`}
+                label={`Progression du niveau ${level.name} : ${done} sur ${total}`}
               />
+              <div className="flex-1">
+                <div className="flex items-baseline justify-between mb-1.5">
+                  <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                    {done} sur {total} terminées
+                  </span>
+                  <span className="text-sm font-semibold tabular-nums" style={{ color: `var(--acc-${accent})` }}>
+                    {pct}%
+                  </span>
+                </div>
+                <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg-sunken)' }} aria-hidden="true">
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ background: `var(--acc-${accent})` }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${pct}%` }}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </motion.div>
 
       {/* Catégories */}
       {level.categories.length === 0 && (
         <div
-          className="rounded-xl px-6 py-12 text-center"
-          style={{ background: 'var(--bg-card)', border: '1px dashed var(--border)' }}
+          className="rounded-[var(--radius-lg)] px-6 py-14 text-center"
+          style={{ border: '1px dashed var(--border)' }}
         >
           <p className="font-semibold text-lg mb-1" style={{ color: 'var(--text-primary)' }}>
             Ressources en préparation
@@ -157,25 +157,30 @@ export default function LevelPage() {
             Les exercices de ce niveau arrivent bientôt.
           </p>
           <Link href="/dashboard/levels" className="text-sm font-medium" style={{ color: 'var(--coral-text)' }}>
-            Voir les autres niveaux →
+            Voir les autres parcours →
           </Link>
         </div>
       )}
 
-      <motion.div variants={container} initial="hidden" animate="show" className="flex flex-col gap-8">
+      <motion.div variants={stagger} initial="hidden" animate="show" className="flex flex-col gap-6">
         {level.categories.map(cat => {
           const CatIcon = ICON_MAP[cat.label] || cat.icon
           const catDone = countDone(cat.links.map(l => resourceId(l.url)))
 
           return (
-            <motion.section key={cat.label} variants={item}>
+            <motion.section key={cat.label} variants={staggerItem}>
               <div className="flex items-center gap-2 mb-3">
-                <CatIcon size={16} aria-hidden="true" style={{ color: `var(--acc-${level.accent})` }} />
-                <h2 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
+                <span
+                  className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: `var(--acc-${accent}-soft)` }}
+                >
+                  <CatIcon size={15} aria-hidden="true" style={{ color: `var(--acc-${accent})` }} />
+                </span>
+                <h2 className="font-semibold text-base" style={{ color: 'var(--text-primary)' }}>
                   {cat.label}
                 </h2>
                 {cat.links.length > 0 && (
-                  <span className="text-xs font-medium ml-auto" style={{ color: 'var(--text-muted)' }}>
+                  <span className="text-xs font-medium ml-auto tabular-nums" style={{ color: 'var(--text-muted)' }}>
                     {catDone}/{cat.links.length}
                   </span>
                 )}
@@ -183,8 +188,8 @@ export default function LevelPage() {
 
               {cat.links.length === 0 && (
                 <p
-                  className="rounded-xl px-4 py-6 text-sm text-center"
-                  style={{ background: 'var(--bg-card)', border: '1px dashed var(--border)', color: 'var(--text-muted)' }}
+                  className="rounded-[var(--radius-lg)] px-4 py-6 text-sm text-center"
+                  style={{ border: '1px dashed var(--border)', color: 'var(--text-muted)' }}
                 >
                   Aucune ressource pour cette catégorie pour le moment.
                 </p>
@@ -196,11 +201,7 @@ export default function LevelPage() {
                   const checked = isDone(id)
 
                   return (
-                    <div
-                      key={link.url}
-                      className="group flex items-center rounded-xl transition-all hover:scale-[1.01]"
-                      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
-                    >
+                    <Surface key={link.url} interactive className="group flex items-center">
                       <button
                         type="button"
                         onClick={() => handleToggle(id)}
@@ -210,7 +211,7 @@ export default function LevelPage() {
                             ? `Marquer « ${link.title} » comme non terminée`
                             : `Marquer « ${link.title} » comme terminée`
                         }
-                        className={parcoursMode ? 'check-chunky m-1.5' : 'tap-target flex-shrink-0 rounded-l-xl'}
+                        className={parcoursMode ? 'check-chunky m-1.5' : 'tap-target flex-shrink-0'}
                       >
                         {parcoursMode ? (
                           checked && <Check size={20} strokeWidth={3} aria-hidden="true" style={{ color: 'var(--navy)' }} />
@@ -218,9 +219,7 @@ export default function LevelPage() {
                           <span
                             className="w-5 h-5 rounded-md flex items-center justify-center transition-colors"
                             style={
-                              checked
-                                ? { background: `var(--acc-${level.accent})` }
-                                : { border: '1.5px solid var(--border)' }
+                              checked ? { background: `var(--acc-${accent})` } : { border: '1.5px solid var(--border)' }
                             }
                           >
                             {checked && <Check size={13} strokeWidth={3} style={{ color: 'var(--bg-card)' }} />}
@@ -245,10 +244,10 @@ export default function LevelPage() {
                           size={12}
                           aria-hidden="true"
                           className="flex-shrink-0 opacity-40 group-hover:opacity-100 transition-opacity"
-                          style={{ color: `var(--acc-${level.accent})` }}
+                          style={{ color: `var(--acc-${accent})` }}
                         />
                       </a>
-                    </div>
+                    </Surface>
                   )
                 })}
               </div>
@@ -256,13 +255,6 @@ export default function LevelPage() {
           )
         })}
       </motion.div>
-
-      {/* Footer note */}
-      <div className="mt-12 pt-8 text-center" style={{ borderTop: '1px solid var(--border)' }}>
-        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-          Ressources sélectionnées par teachMe Madagascar
-        </p>
-      </div>
 
       <Celebration event={event} onDone={clearEvent} />
     </div>

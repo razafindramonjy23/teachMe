@@ -14,7 +14,7 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-10">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <p className="text-sm font-medium mb-2" style={{ color: 'var(--coral-text)' }}>Nous contacter</p>
         <h1 className="font-display text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>

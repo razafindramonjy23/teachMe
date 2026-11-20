@@ -1,9 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft } from 'lucide-react'
 import { useParcours } from '@/lib/use-parcours'
 
 // Légère rotation de chaque tampon obtenu, comme un vrai coup de tampon
@@ -21,15 +19,7 @@ export default function TamponsPage() {
     stamps[stamps.length - 1]
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
-      <Link
-        href="/dashboard"
-        className="inline-flex items-center gap-1.5 text-sm mb-8 hover:text-coral transition-colors"
-        style={{ color: 'var(--text-muted)' }}
-      >
-        <ArrowLeft size={14} aria-hidden="true" /> Accueil
-      </Link>
-
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-2 pb-10">
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <h1 className="font-display text-3xl md:text-4xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
           Carnet de tampons

@@ -63,6 +63,36 @@
   --coral-text: var(--acc-coral);
   /* Barres de graphique — validé : contraste ≥ 3:1, luminosité et chroma dans la bande (dataviz) */
   --chart-bar: #b44b35;
+
+  /* --- Coquille applicative (barre latérale, cartes, barre de leçon) ------
+     Des surfaces tirées de la charte : crème plus chaude pour le panneau
+     latéral, blanc pour les cartes posées dessus. */
+  --bg-sidebar: #ece6da;
+  --bg-elevated: #ffffff;
+  --bg-sunken: #e9e3d8;
+  --border-soft: rgba(27, 42, 74, 0.08);
+  --sidebar-active: rgba(232, 115, 90, 0.16);
+
+  /* Tuiles de statistique — pastels de la charte, texte navy dessus
+     (≥ 10:1 dans tous les cas, mesuré sur la teinte la plus foncée). */
+  --tile-peach: #fadfd8;
+  --tile-sand: #f6e7cc;
+  --tile-sage: #dde8dc;
+  --tile-sky: #d9e2ec;
+  --tile-ink: #1b2a4a;
+
+  /* Rayons et ombres : la maquette est très arrondie, les ombres diffuses. */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --shadow-soft: 0 1px 2px rgba(27, 42, 74, 0.04), 0 8px 24px rgba(27, 42, 74, 0.06);
+  --shadow-lift: 0 2px 6px rgba(27, 42, 74, 0.06), 0 16px 40px rgba(27, 42, 74, 0.12);
+
+  /* Gabarit : hauteurs réservées à la coquille. */
+  --sidebar-w: 248px;
+  --topbar-h: 68px;
+  --nowbar-h: 76px;
 }
 
 .dark {
@@ -108,6 +138,23 @@
   --acc-coral-line: rgba(240, 138, 116, 0.32);
   --coral-text: var(--acc-coral);
   --chart-bar: #e06a51;
+
+  /* Coquille applicative — mode sombre */
+  --bg-sidebar: #16233e;
+  --bg-elevated: #22355a;
+  --bg-sunken: #0f1829;
+  --border-soft: rgba(247, 245, 240, 0.08);
+  --sidebar-active: rgba(232, 115, 90, 0.22);
+
+  /* Tuiles — versions profondes, texte crème dessus (≥ 10:1). */
+  --tile-peach: #42251c;
+  --tile-sand: #3c3119;
+  --tile-sage: #1f3328;
+  --tile-sky: #1d2e49;
+  --tile-ink: #f7f5f0;
+
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.28);
+  --shadow-lift: 0 2px 6px rgba(0, 0, 0, 0.35), 0 16px 40px rgba(0, 0, 0, 0.45);
 }
 
 * {
@@ -357,4 +404,222 @@ body {
   .print-sheet * { color: #000 !important; border-color: #999 !important; }
   .print-sheet tr { break-inside: avoid; }
   .no-print { display: none !important; }
+}
+
+/* ===========================================================
+   Coquille applicative — barre latérale, contenu, barre de leçon
+   =========================================================== */
+
+/* Colonne de contenu : décalée de la barre latérale sur grand écran.
+   La barre de leçon n'existe qu'à partir de 1024 px, donc on ne lui réserve
+   sa hauteur qu'à partir de là — sur téléphone, le contenu va jusqu'en bas. */
+.app-content {
+  min-height: 100vh;
+  padding-bottom: 24px;
+}
+@media (min-width: 1024px) {
+  .app-content {
+    margin-left: var(--sidebar-w);
+    padding-bottom: calc(var(--nowbar-h) + 24px);
+  }
+}
+
+/* Repli de la barre latérale en rail d'icônes.
+   La largeur est portée par --sidebar-w, posée par la coquille : la colonne,
+   le contenu et la barre de leçon suivent sans calcul supplémentaire.
+   La transition n'est active qu'une fois la coquille montée (.shell-ready),
+   sinon la largeur restaurée depuis localStorage s'animerait à chaque
+   chargement de page. */
+.shell-ready .app-sidebar,
+.shell-ready .app-content,
+.shell-ready .app-nowbar {
+  transition: width 0.26s cubic-bezier(0.22, 1, 0.36, 1), margin-left 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sidebar-rail .sidebar-link {
+  justify-content: center;
+  padding: 0;
+  gap: 0;
+}
+.sidebar-rail .sidebar-link .sidebar-chevron {
+  display: none;
+}
+
+/* Surface posée sur le fond : la carte de base de toute l'interface. */
+.surface {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Variante cliquable : se soulève légèrement au survol. */
+.surface-interactive {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.surface-interactive:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lift);
+  border-color: var(--acc-coral-line);
+}
+
+/* Lien de la barre latérale. L'état actif est porté par aria-current. */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  padding: 0 0.875rem;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.sidebar-link:hover {
+  background: var(--border-soft);
+  color: var(--text-primary);
+}
+.sidebar-link[aria-current='page'],
+.sidebar-link[aria-expanded='true'] {
+  color: var(--text-primary);
+}
+/* Le fond de l'élément actif est un calque animé (layoutId) rendu par le
+   composant, pas une couleur posée ici : il glisse d'un lien à l'autre. */
+.sidebar-link[aria-current='page'] {
+  font-weight: 600;
+}
+.sidebar-link[aria-current='page']:hover {
+  background: transparent;
+}
+
+/* Pastille de filtre (genres de la maquette -> niveaux). */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 36px;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.chip:hover {
+  color: var(--text-primary);
+  border-color: var(--acc-coral-line);
+}
+.chip[aria-pressed='true'] {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--bg-primary);
+  font-weight: 600;
+}
+
+/* Barre de recherche du bandeau supérieur. */
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.search-field:hover {
+  border-color: var(--acc-coral-line);
+}
+
+/* ===========================================================
+   Bascule clair / sombre — révélation circulaire
+   Le cercle part du bouton : --sweep-x / --sweep-y sont posées en JS,
+   --sweep-r est le rayon qui couvre le coin le plus éloigné.
+   =========================================================== */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+html.theme-sweep::view-transition-new(root) {
+  animation: theme-reveal 820ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0px at var(--sweep-x) var(--sweep-y));
+  }
+  to {
+    clip-path: circle(var(--sweep-r) at var(--sweep-x) var(--sweep-y));
+  }
+}
+
+/* Repli pour les navigateurs sans View Transitions : un calque de la couleur
+   cible s'ouvre en cercle, le thème bascule derrière, puis le calque part. */
+.theme-sweep-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  clip-path: circle(0px at var(--sweep-x) var(--sweep-y));
+  animation: theme-sweep-grow 820ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.theme-sweep-overlay.is-leaving {
+  animation: theme-sweep-fade 220ms ease forwards;
+}
+
+@keyframes theme-sweep-grow {
+  to {
+    clip-path: circle(var(--sweep-r) at var(--sweep-x) var(--sweep-y));
+  }
+}
+@keyframes theme-sweep-fade {
+  to {
+    opacity: 0;
+  }
+}
+
+/* Aucun balayage si l'utilisateur a demandé moins d'animations (WCAG 2.3.3).
+   Le JS s'en assure déjà ; cette règle couvre le cas où la préférence change
+   pendant l'animation. */
+@media (prefers-reduced-motion: reduce) {
+  html.theme-sweep::view-transition-new(root),
+  html.theme-sweep::view-transition-old(root),
+  .theme-sweep-overlay {
+    animation: none !important;
+  }
+  .theme-sweep-overlay {
+    display: none;
+  }
+  .surface-interactive:hover {
+    transform: none;
+  }
+}
+
+/* Bandeau supérieur : fond translucide, avec repli opaque pour les
+   navigateurs sans color-mix(). */
+.topbar-surface {
+  background: var(--bg-primary);
+  backdrop-filter: blur(12px);
+}
+@supports (background: color-mix(in srgb, red 50%, transparent)) {
+  .topbar-surface {
+    background: color-mix(in srgb, var(--bg-primary) 86%, transparent);
+  }
 }

@@ -1,177 +1,194 @@
 'use client'
 
-import { motion } from 'framer-motion'
+/**
+ * Catalogue — l'écran « bibliothèque » de la maquette.
+ *
+ * Onglets (niveaux / parcours / tout), filtres par état d'avancement, tri,
+ * puis une grille de pochettes. Les pochettes sont dessinées en SVG
+ * (components/ui/LevelCover) : aucune image distante, et elles suivent le
+ * thème.
+ */
+
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, Plane, Briefcase, GraduationCap, Globe } from 'lucide-react'
-import { LEVELS, COURSES, type CourseItem } from '@/lib/catalog'
-import { levelResourceCount, levelResourceIds } from '@/lib/resources'
-import { useProgress } from '@/lib/progress'
+import { motion } from 'framer-motion'
+import { useParcours, type PathStep } from '@/lib/use-parcours'
+import { Chip } from '@/components/ui/Chip'
+import { Tabs, SegmentedTabs } from '@/components/ui/Tabs'
+import { LevelCover } from '@/components/ui/LevelCover'
+import { stagger, staggerItem } from '@/components/ui/PageTransition'
 
-const ICONS: Record<CourseItem['iconName'], typeof Plane> = {
-  plane: Plane,
-  briefcase: Briefcase,
-  graduation: GraduationCap,
-  globe: Globe,
+type Family = 'niveaux' | 'parcours' | 'tout'
+type Status = 'tous' | 'en-cours' | 'boucles' | 'a-commencer'
+type Sort = 'progression' | 'alpha'
+
+const FAMILIES = [
+  { id: 'niveaux' as const, label: 'Niveaux' },
+  { id: 'parcours' as const, label: 'Parcours' },
+  { id: 'tout' as const, label: 'Tout' },
+]
+
+const SORTS = [
+  { id: 'progression' as const, label: 'Progression' },
+  { id: 'alpha' as const, label: 'A-Z' },
+]
+
+function statusOf(step: PathStep): Exclude<Status, 'tous'> {
+  if (step.complete) return 'boucles'
+  return step.done > 0 ? 'en-cours' : 'a-commencer'
 }
 
-const container = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.06 } },
-}
-const item = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.35 } },
-}
+export default function CataloguePage() {
+  const { path, courses } = useParcours()
+  const [family, setFamily] = useState<Family>('tout')
+  const [status, setStatus] = useState<Status>('tous')
+  const [sort, setSort] = useState<Sort>('progression')
 
-export default function LevelsIndexPage() {
-  const { countDone } = useProgress()
+  const pool = useMemo(() => {
+    if (family === 'niveaux') return path
+    if (family === 'parcours') return courses
+    return [...path, ...courses]
+  }, [family, path, courses])
+
+  const counts = useMemo(
+    () => ({
+      tous: pool.length,
+      'en-cours': pool.filter(s => statusOf(s) === 'en-cours').length,
+      boucles: pool.filter(s => statusOf(s) === 'boucles').length,
+      'a-commencer': pool.filter(s => statusOf(s) === 'a-commencer').length,
+    }),
+    [pool],
+  )
+
+  const visible = useMemo(() => {
+    const filtered = status === 'tous' ? pool : pool.filter(s => statusOf(s) === status)
+    const sorted = [...filtered]
+    if (sort === 'alpha') {
+      sorted.sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+    } else {
+      // Du plus avancé au moins avancé, les parcours bouclés en dernier :
+      // on veut reprendre ce qui est commencé, pas relire ce qui est fini.
+      const ratio = (s: PathStep) => (s.total === 0 ? 0 : s.done / s.total)
+      sorted.sort((a, b) => {
+        if (a.complete !== b.complete) return a.complete ? 1 : -1
+        return ratio(b) - ratio(a)
+      })
+    }
+    return sorted
+  }, [pool, status, sort])
+
+  const totalResources = pool.reduce((n, s) => n + s.total, 0)
+  const totalDone = pool.reduce((n, s) => n + s.done, 0)
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <Link
-        href="/dashboard"
-        className="inline-flex items-center gap-1.5 text-sm mb-8 hover:text-coral transition-colors"
-        style={{ color: 'var(--text-muted)' }}
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-10">
+      <h1 className="font-display text-3xl md:text-4xl font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
+        Catalogue
+      </h1>
+      <p className="text-sm mt-1 mb-5" style={{ color: 'var(--text-muted)' }}>
+        {pool.length} parcours · {totalResources} ressources · {totalDone} terminée{totalDone > 1 ? 's' : ''}
+      </p>
+
+      <div className="mb-5" style={{ borderBottom: '1px solid var(--border)' }}>
+        <Tabs idPrefix="catalogue" label="Familles de parcours" items={FAMILIES} value={family} onChange={setFamily} />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        <Chip label="Tous" count={counts.tous} pressed={status === 'tous'} onClick={() => setStatus('tous')} />
+        <Chip
+          label="En cours"
+          accent="amber"
+          count={counts['en-cours']}
+          pressed={status === 'en-cours'}
+          onClick={() => setStatus('en-cours')}
+        />
+        <Chip
+          label="Bouclés"
+          accent="green"
+          count={counts.boucles}
+          pressed={status === 'boucles'}
+          onClick={() => setStatus('boucles')}
+        />
+        <Chip
+          label="À commencer"
+          accent="blue"
+          count={counts['a-commencer']}
+          pressed={status === 'a-commencer'}
+          onClick={() => setStatus('a-commencer')}
+        />
+        <span className="ml-auto">
+          <SegmentedTabs idPrefix="tri" label="Trier le catalogue" items={SORTS} value={sort} onChange={setSort} />
+        </span>
+      </div>
+
+      <div
+        role="tabpanel"
+        id={`catalogue-panel-${family}`}
+        aria-labelledby={`catalogue-tab-${family}`}
+        tabIndex={-1}
       >
-        <ArrowLeft size={14} aria-hidden="true" /> Retour
-      </Link>
-
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
-        <p className="text-sm font-medium mb-2" style={{ color: 'var(--coral-text)' }}>Catalogue</p>
-        <h1 className="font-display text-3xl md:text-4xl font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
-          Tous les niveaux
-        </h1>
-        <p className="text-base max-w-2xl" style={{ color: 'var(--text-secondary)' }}>
-          Six niveaux du cadre européen (CECRL) et quatre parcours spécialisés. Choisissez votre point de départ.
+      {visible.length === 0 ? (
+        <p
+          className="rounded-[var(--radius-lg)] px-6 py-14 text-center text-sm"
+          style={{ border: '1px dashed var(--border)', color: 'var(--text-muted)' }}
+        >
+          Aucun parcours dans cette sélection.
         </p>
-      </motion.div>
-
-      <div className="coral-divider mb-10" />
-
-      <section className="mb-12">
-        <h2 className="font-display text-2xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
-          Niveaux généraux
-        </h2>
+      ) : (
         <motion.div
-          variants={container}
+          key={`${family}-${status}-${sort}`}
+          variants={stagger}
           initial="hidden"
           animate="show"
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-6"
         >
-          {LEVELS.map(level => (
-            <motion.div key={level.code} variants={item}>
-              <Link href={level.href} className="block h-full">
-                <div
-                  className="card-glow rounded-xl p-5 h-full group"
-                  style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <span
-                      className="px-2.5 py-1 rounded-lg text-xs font-bold font-mono"
-                      style={{
-                        background: `var(--acc-${level.accent}-soft)`,
-                        color: `var(--acc-${level.accent})`,
-                        border: `1px solid var(--acc-${level.accent}-line)`,
-                      }}
-                    >
-                      {level.code}
-                    </span>
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {levelResourceCount(level.slug)} ressources
-                    </span>
-                  </div>
-                  <h3
-                    className="font-semibold text-lg mb-1 group-hover:text-coral transition-colors"
+          {visible.map(step => {
+            const pct = step.total === 0 ? 0 : Math.round((step.done / step.total) * 100)
+            return (
+              <motion.div key={step.slug} variants={staggerItem}>
+                <Link href={step.href} className="block group">
+                  <span
+                    className="block rounded-[var(--radius-lg)] overflow-hidden mb-2.5 transition-transform duration-300 group-hover:-translate-y-1.5"
+                    style={{ boxShadow: 'var(--shadow-soft)' }}
+                  >
+                    <LevelCover slug={step.slug} accent={step.accent} code={step.code} />
+                  </span>
+                  <span
+                    className="block text-sm font-semibold truncate group-hover:text-coral transition-colors"
                     style={{ color: 'var(--text-primary)' }}
                   >
-                    {level.name}
-                  </h3>
-                  <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{level.desc}</p>
-
-                  {(() => {
-                    const total = levelResourceCount(level.slug)
-                    const done = countDone(levelResourceIds(level.slug))
-                    const pct = total === 0 ? 0 : Math.round((done / total) * 100)
-                    return (
-                      <span className="block mt-4">
-                        <span className="flex items-center justify-between text-xs mb-1.5">
-                          <span style={{ color: 'var(--text-muted)' }}>{done}/{total} terminées</span>
-                          <span className="font-medium" style={{ color: `var(--acc-${level.accent})` }}>{pct}%</span>
-                        </span>
-                        <span className="block h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-secondary)' }}
-                          role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}
-                          aria-label={`Progression ${level.name}`}>
-                          <span className="block h-full rounded-full transition-[width] duration-500"
-                            style={{ width: `${pct}%`, background: `var(--acc-${level.accent})` }} />
-                        </span>
-                      </span>
-                    )
-                  })()}
-
-                  <span
-                    className="mt-3 flex items-center gap-1 text-xs font-medium"
-                    style={{ color: `var(--acc-${level.accent})` }}
-                  >
-                    Explorer{' '}
-                    <ArrowRight size={12} aria-hidden="true" className="group-hover:translate-x-1 transition-transform" />
+                    {step.name}
                   </span>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
-        </motion.div>
-      </section>
-
-      <section>
-        <h2 className="font-display text-2xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
-          Cours spécialisés
-        </h2>
-        <motion.div
-          variants={container}
-          initial="hidden"
-          animate="show"
-          className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-        >
-          {COURSES.map(course => {
-            const Icon = ICONS[course.iconName]
-            return (
-              <motion.div key={course.code} variants={item}>
-                <Link href={course.href} className="block h-full">
-                  <div
-                    className="card-glow rounded-xl p-5 h-full group flex items-center gap-4"
-                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+                  <span className="block text-xs mb-2" style={{ color: 'var(--text-muted)' }}>
+                    {step.code} · {step.total} ressource{step.total > 1 ? 's' : ''}
+                  </span>
+                  <span
+                    className="block h-1.5 rounded-full overflow-hidden"
+                    style={{ background: 'var(--bg-sunken)' }}
+                    role="progressbar"
+                    aria-valuenow={pct}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label={`Progression ${step.name} : ${step.done} sur ${step.total}`}
                   >
-                    <span
-                      className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{
-                        background: `var(--acc-${course.accent}-soft)`,
-                        border: `1px solid var(--acc-${course.accent}-line)`,
-                      }}
-                    >
-                      <Icon size={22} aria-hidden="true" style={{ color: `var(--acc-${course.accent})` }} />
-                    </span>
-                    <span className="flex-1">
-                      <h3
-                        className="font-semibold mb-0.5 group-hover:text-coral transition-colors"
-                        style={{ color: 'var(--text-primary)' }}
-                      >
-                        {course.name}
-                      </h3>
-                      <span className="text-sm block" style={{ color: 'var(--text-muted)' }}>{course.desc}</span>
-                    </span>
-                    <ArrowRight
-                      size={16}
-                      aria-hidden="true"
-                      style={{ color: 'var(--text-muted)' }}
-                      className="group-hover:translate-x-1 group-hover:text-coral transition-all flex-shrink-0"
+                    <motion.span
+                      className="block h-full rounded-full"
+                      style={{ background: `var(--acc-${step.accent})` }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${pct}%` }}
+                      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                     />
-                  </div>
+                  </span>
+                  <span className="block text-[0.7rem] mt-1 tabular-nums" style={{ color: 'var(--text-muted)' }}>
+                    {step.complete ? 'Bouclé' : `${step.done}/${step.total}`}
+                  </span>
                 </Link>
               </motion.div>
             )
           })}
         </motion.div>
-      </section>
+      )}
+      </div>
     </div>
   )
 }

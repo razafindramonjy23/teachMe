@@ -653,3 +653,44 @@ export function findResource(id: string): ResourceLocation | null {
   }
   return null
 }
+
+/**
+ * Tous les emplacements d'un niveau, dans l'ordre d'affichage.
+ * Utilisé par la barre de leçon en cours pour enchaîner les ressources sans
+ * rappeler `findResource` (qui balaie tout le catalogue) une fois par lien.
+ */
+export function levelResourceLocations(levelSlug: string): ResourceLocation[] {
+  const level = levelData[levelSlug]
+  if (!level) return []
+  return level.categories.flatMap(cat =>
+    cat.links.map(link => ({
+      id: resourceId(link.url),
+      levelSlug,
+      levelName: level.name,
+      accent: level.accent,
+      category: cat.label,
+      title: link.title,
+      url: link.url,
+    })),
+  )
+}
+
+let locationIndex: Map<string, ResourceLocation> | null = null
+
+/**
+ * Index identifiant -> premier emplacement, construit une fois.
+ * `findResource` suffit pour une ressource ; pour en résoudre des dizaines
+ * (historique, journal), passer par cet index évite autant de balayages du
+ * catalogue qu'il y a de lignes.
+ */
+export function resourceIndex(): Map<string, ResourceLocation> {
+  if (locationIndex) return locationIndex
+  const index = new Map<string, ResourceLocation>()
+  for (const slug of Object.keys(levelData)) {
+    for (const location of levelResourceLocations(slug)) {
+      if (!index.has(location.id)) index.set(location.id, location)
+    }
+  }
+  locationIndex = index
+  return index
+}

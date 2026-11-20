@@ -37,6 +37,12 @@ export type Parcours = {
   stamps: Stamp[]
   /** Dernière ressource ouverte et non terminée. */
   resume: ResourceLocation | null
+  /**
+   * Horodatages `done_at` des ressources terminées encore au catalogue, pour
+   * les graphiques d'activité. Déjà filtrés ici : les pages de statistiques
+   * n'ont pas à refaire le tri du catalogue.
+   */
+  doneAt: string[]
 }
 
 export function useParcours(): Parcours {
@@ -104,6 +110,6 @@ export function useParcours(): Parcours {
 
     const resume = lastOpened ? findResource(lastOpened.resourceId) : null
 
-    return { isLoading, stats, path, courses, focus, stamps, resume }
+    return { isLoading, stats, path, courses, focus, stamps, resume, doneAt }
   }, [entries, isLoading, countDone, isDone, lastOpened, profileLevel])
 }
